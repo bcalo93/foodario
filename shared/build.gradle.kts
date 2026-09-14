@@ -46,6 +46,9 @@ kotlin {
             implementation(libs.compose.uiTooling)
             implementation(libs.sqldelight.android.driver)
         }
+        iosMain.dependencies {
+            implementation(libs.sqldelight.native.driver)
+        }
         commonMain.dependencies {
             implementation(libs.compose.runtime)
             implementation(libs.compose.foundation)
@@ -72,6 +75,14 @@ kotlin {
         getByName("androidHostTest").dependencies {
             implementation(libs.kotlin.test)
             implementation(libs.mockk)
+        }
+    }
+}
+
+sqldelight {
+    databases {
+        create("FoodarioDatabase") {
+            packageName.set("com.foodario.database")
         }
     }
 }

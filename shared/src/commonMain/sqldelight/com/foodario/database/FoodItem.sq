@@ -1,0 +1,41 @@
+CREATE TABLE food_item (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    category TEXT NOT NULL,
+    quantity REAL NOT NULL,
+    unit TEXT NOT NULL,
+    is_frozen INTEGER NOT NULL DEFAULT 0,
+    expiration_date INTEGER,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL
+);
+
+CREATE INDEX idx_food_item_name ON food_item(name);
+CREATE INDEX idx_food_item_expiration ON food_item(expiration_date);
+
+selectAll:
+SELECT * FROM food_item ORDER BY name ASC;
+
+search:
+SELECT * FROM food_item WHERE name LIKE '%' || :query || '%' ORDER BY name ASC;
+
+selectById:
+SELECT * FROM food_item WHERE id = :id;
+
+selectExpiringBefore:
+SELECT * FROM food_item
+WHERE expiration_date IS NOT NULL AND expiration_date <= :threshold
+ORDER BY expiration_date ASC;
+
+insert:
+INSERT INTO food_item(name, category, quantity, unit, is_frozen, expiration_date, created_at, updated_at)
+VALUES (:name, :category, :quantity, :unit, :isFrozen, :expirationDate, :createdAt, :updatedAt);
+
+updateQuantity:
+UPDATE food_item SET quantity = :quantity, updated_at = :updatedAt WHERE id = :id;
+
+updateFrozen:
+UPDATE food_item SET is_frozen = :isFrozen, updated_at = :updatedAt WHERE id = :id;
+
+delete:
+DELETE FROM food_item WHERE id = :id;

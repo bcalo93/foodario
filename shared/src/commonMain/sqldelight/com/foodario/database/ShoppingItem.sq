@@ -1,0 +1,18 @@
+CREATE TABLE shopping_item (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    category TEXT,
+    quantity REAL,
+    unit TEXT,
+    created_at INTEGER NOT NULL
+);
+
+selectAll:
+SELECT * FROM shopping_item ORDER BY created_at DESC;
+
+insert:
+INSERT INTO shopping_item(name, category, quantity, unit, created_at)
+VALUES (:name, :category, :quantity, :unit, :createdAt);
+
+delete:
+DELETE FROM shopping_item WHERE id = :id;
