@@ -3,10 +3,14 @@ package com.foodario.inventory.presentation
 import app.cash.turbine.ReceiveTurbine
 import app.cash.turbine.test
 import com.foodario.core.domain.usecase.ObserveUseCase
+import com.foodario.core.domain.usecase.UseCase
 import com.foodario.inventory.domain.model.FoodCategory
 import com.foodario.inventory.domain.model.FoodItem
 import com.foodario.inventory.domain.model.QuantityUnit
+import com.foodario.inventory.domain.usecase.AddFoodItemParams
 import com.foodario.inventory.domain.usecase.ObserveInventoryParams
+import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -27,6 +31,7 @@ import kotlin.test.assertEquals
 class InventoryViewModelTest {
 
     private val observeInventory = mockk<ObserveUseCase<ObserveInventoryParams, List<FoodItem>>>()
+    private val addFoodItem = mockk<UseCase<AddFoodItemParams, FoodItem>>()
 
     private val leche = FoodItem(
         id = 1L,
@@ -53,7 +58,7 @@ class InventoryViewModelTest {
     @Test
     fun `emits items when observing`() = runTest {
         every { observeInventory(ObserveInventoryParams()) } returns flowOf(listOf(leche))
-        val viewModel = InventoryViewModel(observeInventory)
+        val viewModel = InventoryViewModel(observeInventory, addFoodItem)
 
         viewModel.uiState.test {
             val loaded = awaitLoaded()
@@ -65,7 +70,7 @@ class InventoryViewModelTest {
     @Test
     fun `updates search query via event`() = runTest {
         every { observeInventory(any()) } returns flowOf(listOf(leche))
-        val viewModel = InventoryViewModel(observeInventory)
+        val viewModel = InventoryViewModel(observeInventory, addFoodItem)
 
         viewModel.uiState.test {
             awaitLoaded()
@@ -81,7 +86,7 @@ class InventoryViewModelTest {
     @Test
     fun `filters by category via event`() = runTest {
         every { observeInventory(any()) } returns flowOf(listOf(leche))
-        val viewModel = InventoryViewModel(observeInventory)
+        val viewModel = InventoryViewModel(observeInventory, addFoodItem)
 
         viewModel.uiState.test {
             awaitLoaded()
@@ -92,6 +97,35 @@ class InventoryViewModelTest {
         }
 
         verify { observeInventory(ObserveInventoryParams(category = FoodCategory.DAIRY)) }
+    }
+
+    @Test
+    fun `quick add calls add use case with defaults`() = runTest {
+        every { observeInventory(any()) } returns flowOf(listOf(leche))
+        coEvery { addFoodItem(any()) } returns leche
+        val viewModel = InventoryViewModel(observeInventory, addFoodItem)
+
+        viewModel.uiState.test {
+            awaitLoaded()
+            viewModel.onEvent(InventoryEvent.QuickAddCategorySelected(FoodCategory.DAIRY))
+            viewModel.onEvent(InventoryEvent.QuickAdd("Leche"))
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        coVerify { addFoodItem(AddFoodItemParams(name = "Leche", category = FoodCategory.DAIRY)) }
+    }
+
+    @Test
+    fun `quick add category selected updates quick add category flow`() = runTest {
+        every { observeInventory(any()) } returns flowOf(listOf(leche))
+        val viewModel = InventoryViewModel(observeInventory, addFoodItem)
+
+        viewModel.uiState.test {
+            awaitLoaded()
+            viewModel.onEvent(InventoryEvent.QuickAddCategorySelected(FoodCategory.FRUITS))
+            assertEquals(FoodCategory.FRUITS, viewModel.quickAddCategory.value)
+            cancelAndIgnoreRemainingEvents()
+        }
     }
 
     private suspend fun ReceiveTurbine<InventoryUiState>.awaitLoaded(): InventoryUiState {

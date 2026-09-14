@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -36,8 +37,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.foodario.core.domain.usecase.ObserveUseCase
+import com.foodario.core.domain.usecase.UseCase
 import com.foodario.core.presentation.components.DoodleDivider
 import com.foodario.core.presentation.components.NotebookListItem
+import com.foodario.core.presentation.components.QuickAddBar
 import com.foodario.core.presentation.components.emoji
 import com.foodario.core.presentation.components.notebookMargin
 import com.foodario.core.presentation.theme.FoodarioTheme
@@ -45,17 +48,20 @@ import com.foodario.core.presentation.theme.categoryColor
 import com.foodario.inventory.domain.model.FoodCategory
 import com.foodario.inventory.domain.model.FoodItem
 import com.foodario.inventory.domain.model.QuantityUnit
+import com.foodario.inventory.domain.usecase.AddFoodItemParams
 import com.foodario.inventory.domain.usecase.ObserveInventoryParams
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlin.time.Instant
 import org.koin.compose.viewmodel.koinViewModel
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun InventoryScreen(
     viewModel: InventoryViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val quickAddCategory by viewModel.quickAddCategory.collectAsStateWithLifecycle()
     val colors = FoodarioTheme.colors
     val typography = FoodarioTheme.typography
 
@@ -87,6 +93,12 @@ fun InventoryScreen(
             )
             Spacer(Modifier.height(8.dp))
             DoodleDivider()
+            Spacer(Modifier.height(8.dp))
+            QuickAddBar(
+                selectedCategory = quickAddCategory,
+                onCategorySelected = { viewModel.onEvent(InventoryEvent.QuickAddCategorySelected(it)) },
+                onAdd = { viewModel.onEvent(InventoryEvent.QuickAdd(it)) },
+            )
         }
 
         when {
@@ -153,6 +165,7 @@ fun InventoryScreen(
                             unit = item.unit,
                             isFrozen = item.isFrozen,
                             onClick = {},
+                            modifier = Modifier.animateItem(),
                         )
                     }
                 }
@@ -292,11 +305,24 @@ private fun sampleItem(
     updatedAt = Instant.fromEpochMilliseconds(1_700_000_000_000L),
 )
 
+private fun fakeAddFoodItemUseCase(): UseCase<AddFoodItemParams, FoodItem> =
+    object : UseCase<AddFoodItemParams, FoodItem> {
+        override suspend fun invoke(params: AddFoodItemParams): FoodItem =
+            sampleItem(
+                id = 0L,
+                name = params.name,
+                category = params.category,
+                quantity = params.quantity,
+                unit = params.unit,
+                isFrozen = params.isFrozen,
+            )
+    }
+
 @Preview
 @Composable
 private fun InventoryScreenLightPreview() {
     FoodarioTheme(darkTheme = false) {
-        InventoryScreen(viewModel = InventoryViewModel(fakeObserveInventoryUseCase()))
+        InventoryScreen(viewModel = InventoryViewModel(fakeObserveInventoryUseCase(), fakeAddFoodItemUseCase()))
     }
 }
 
@@ -304,6 +330,6 @@ private fun InventoryScreenLightPreview() {
 @Composable
 private fun InventoryScreenDarkPreview() {
     FoodarioTheme(darkTheme = true) {
-        InventoryScreen(viewModel = InventoryViewModel(fakeObserveInventoryUseCase()))
+        InventoryScreen(viewModel = InventoryViewModel(fakeObserveInventoryUseCase(), fakeAddFoodItemUseCase()))
     }
 }
