@@ -1,3 +1,3 @@
 package com.foodario.di
 
-fun sharedModules() = listOf(dataModule, domainModule)
+fun sharedModules() = listOf(dataModule, domainModule, presentationModule)
