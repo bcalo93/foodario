@@ -10,6 +10,9 @@ CREATE TABLE shopping_item (
 selectAll:
 SELECT * FROM shopping_item ORDER BY created_at DESC;
 
+selectById:
+SELECT * FROM shopping_item WHERE id = :id;
+
 insert:
 INSERT INTO shopping_item(name, category, quantity, unit, created_at)
 VALUES (:name, :category, :quantity, :unit, :createdAt);

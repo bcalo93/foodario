@@ -27,9 +27,11 @@ SELECT * FROM food_item
 WHERE expiration_date IS NOT NULL AND expiration_date <= :threshold
 ORDER BY expiration_date ASC;
 
-insert:
+insertFoodItem {
 INSERT INTO food_item(name, category, quantity, unit, is_frozen, expiration_date, created_at, updated_at)
 VALUES (:name, :category, :quantity, :unit, :isFrozen, :expirationDate, :createdAt, :updatedAt);
+SELECT last_insert_rowid() AS id;
+}
 
 updateQuantity:
 UPDATE food_item SET quantity = :quantity, updated_at = :updatedAt WHERE id = :id;
