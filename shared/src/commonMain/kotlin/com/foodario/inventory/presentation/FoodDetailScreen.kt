@@ -611,25 +611,27 @@ private fun ExpirationDialog(
             }
         },
     ) {
-        DatePicker(
-            state = datePickerState,
-            title = null,
-            headline = {
-                Text(
-                    text = datePickerState.selectedDateMillis
-                        ?.let { formatDate(it.toLocalDate()) }
-                        ?: "Elegí una fecha",
-                    style = FoodarioTheme.typography.titleHand,
-                    color = colors.ink,
-                    maxLines = 1,
-                )
-            },
-        )
-        TextButton(
-            onClick = { onSelect(null) },
-            modifier = Modifier.align(Alignment.End),
-        ) {
-            Text(text = "Sin vencimiento", color = colors.marginRed)
+        Column(modifier = Modifier.fillMaxWidth()) {
+            DatePicker(
+                state = datePickerState,
+                title = null,
+                headline = {
+                    Text(
+                        text = datePickerState.selectedDateMillis
+                            ?.let { formatDate(it.toLocalDate()) }
+                            ?: "Elegí una fecha",
+                        style = FoodarioTheme.typography.titleHand,
+                        color = colors.ink,
+                        maxLines = 1,
+                    )
+                },
+            )
+            TextButton(
+                onClick = { onSelect(null) },
+                modifier = Modifier.align(Alignment.End),
+            ) {
+                Text(text = "Sin vencimiento", color = colors.marginRed)
+            }
         }
     }
 }
