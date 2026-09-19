@@ -58,6 +58,7 @@ import org.koin.compose.viewmodel.koinViewModel
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun InventoryScreen(
+    onItemClick: (Long) -> Unit = {},
     viewModel: InventoryViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -164,7 +165,7 @@ fun InventoryScreen(
                             quantity = item.quantity,
                             unit = item.unit,
                             isFrozen = item.isFrozen,
-                            onClick = {},
+                            onClick = { onItemClick(item.id) },
                             modifier = Modifier.animateItem(),
                         )
                     }
