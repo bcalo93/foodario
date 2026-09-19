@@ -96,6 +96,28 @@ class InventoryUseCasesTest {
     }
 
     @Test
+    fun `updateCategory delegates to repository`() = runTest {
+        val repository = mockk<InventoryRepository>()
+        coEvery { repository.setCategory(any(), any()) } returns Unit
+        val useCase = UpdateCategoryUseCase(repository)
+
+        useCase(UpdateCategoryParams(itemId = 1L, category = FoodCategory.FRUITS))
+
+        coVerify { repository.setCategory(1L, FoodCategory.FRUITS) }
+    }
+
+    @Test
+    fun `updateUnit delegates to repository`() = runTest {
+        val repository = mockk<InventoryRepository>()
+        coEvery { repository.setUnit(any(), any()) } returns Unit
+        val useCase = UpdateUnitUseCase(repository)
+
+        useCase(UpdateUnitParams(itemId = 1L, unit = QuantityUnit.GRAMS))
+
+        coVerify { repository.setUnit(1L, QuantityUnit.GRAMS) }
+    }
+
+    @Test
     fun `consume reduces quantity`() = runTest {
         val repository = mockk<InventoryRepository>()
         coEvery { repository.getById(1L) } returns foodItem(quantity = 5.0)

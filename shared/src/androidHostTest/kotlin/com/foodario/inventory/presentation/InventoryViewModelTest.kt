@@ -8,7 +8,9 @@ import com.foodario.inventory.domain.model.FoodCategory
 import com.foodario.inventory.domain.model.FoodItem
 import com.foodario.inventory.domain.model.QuantityUnit
 import com.foodario.inventory.domain.usecase.AddFoodItemParams
+import com.foodario.inventory.domain.usecase.DeleteFoodItemParams
 import com.foodario.inventory.domain.usecase.ObserveInventoryParams
+import com.foodario.inventory.domain.usecase.UpdateQuantityParams
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -32,6 +34,8 @@ class InventoryViewModelTest {
 
     private val observeInventory = mockk<ObserveUseCase<ObserveInventoryParams, List<FoodItem>>>()
     private val addFoodItem = mockk<UseCase<AddFoodItemParams, FoodItem>>()
+    private val updateQuantity = mockk<UseCase<UpdateQuantityParams, Unit>>()
+    private val deleteFoodItem = mockk<UseCase<DeleteFoodItemParams, Unit>>()
 
     private val leche = FoodItem(
         id = 1L,
@@ -58,7 +62,7 @@ class InventoryViewModelTest {
     @Test
     fun `emits items when observing`() = runTest {
         every { observeInventory(ObserveInventoryParams()) } returns flowOf(listOf(leche))
-        val viewModel = InventoryViewModel(observeInventory, addFoodItem)
+        val viewModel = viewModel()
 
         viewModel.uiState.test {
             val loaded = awaitLoaded()
@@ -70,7 +74,7 @@ class InventoryViewModelTest {
     @Test
     fun `updates search query via event`() = runTest {
         every { observeInventory(any()) } returns flowOf(listOf(leche))
-        val viewModel = InventoryViewModel(observeInventory, addFoodItem)
+        val viewModel = viewModel()
 
         viewModel.uiState.test {
             awaitLoaded()
@@ -86,7 +90,7 @@ class InventoryViewModelTest {
     @Test
     fun `filters by category via event`() = runTest {
         every { observeInventory(any()) } returns flowOf(listOf(leche))
-        val viewModel = InventoryViewModel(observeInventory, addFoodItem)
+        val viewModel = viewModel()
 
         viewModel.uiState.test {
             awaitLoaded()
@@ -103,7 +107,7 @@ class InventoryViewModelTest {
     fun `quick add calls add use case with defaults`() = runTest {
         every { observeInventory(any()) } returns flowOf(listOf(leche))
         coEvery { addFoodItem(any()) } returns leche
-        val viewModel = InventoryViewModel(observeInventory, addFoodItem)
+        val viewModel = viewModel()
 
         viewModel.uiState.test {
             awaitLoaded()
@@ -118,7 +122,7 @@ class InventoryViewModelTest {
     @Test
     fun `quick add category selected updates quick add category flow`() = runTest {
         every { observeInventory(any()) } returns flowOf(listOf(leche))
-        val viewModel = InventoryViewModel(observeInventory, addFoodItem)
+        val viewModel = viewModel()
 
         viewModel.uiState.test {
             awaitLoaded()
@@ -128,10 +132,47 @@ class InventoryViewModelTest {
         }
     }
 
+    @Test
+    fun `increase quantity calls update quantity with one more`() = runTest {
+        every { observeInventory(any()) } returns flowOf(listOf(leche))
+        coEvery { updateQuantity(any()) } returns Unit
+        val viewModel = viewModel()
+
+        viewModel.uiState.test {
+            awaitLoaded()
+            viewModel.onEvent(InventoryEvent.IncreaseQuantity(leche.id, leche.quantity))
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        coVerify { updateQuantity(UpdateQuantityParams(leche.id, 3.0)) }
+    }
+
+    @Test
+    fun `delete calls delete use case`() = runTest {
+        every { observeInventory(any()) } returns flowOf(listOf(leche))
+        coEvery { deleteFoodItem(any()) } returns Unit
+        val viewModel = viewModel()
+
+        viewModel.uiState.test {
+            awaitLoaded()
+            viewModel.onEvent(InventoryEvent.Delete(leche.id))
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        coVerify { deleteFoodItem(DeleteFoodItemParams(leche.id)) }
+    }
+
     private suspend fun ReceiveTurbine<InventoryUiState>.awaitLoaded(): InventoryUiState {
         while (true) {
             val state = awaitItem()
             if (!state.isLoading && state.error == null) return state
         }
     }
+
+    private fun viewModel() = InventoryViewModel(
+        observeInventory = observeInventory,
+        addFoodItem = addFoodItem,
+        updateQuantity = updateQuantity,
+        deleteFoodItem = deleteFoodItem,
+    )
 }

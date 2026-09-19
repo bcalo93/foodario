@@ -39,6 +39,12 @@ SELECT last_insert_rowid() AS id;
 updateQuantity:
 UPDATE food_item SET quantity = :quantity, updated_at = :updatedAt WHERE id = :id;
 
+updateCategory:
+UPDATE food_item SET category = :category, updated_at = :updatedAt WHERE id = :id;
+
+updateUnit:
+UPDATE food_item SET unit = :unit, updated_at = :updatedAt WHERE id = :id;
+
 updateFrozen:
 UPDATE food_item SET is_frozen = :isFrozen, updated_at = :updatedAt WHERE id = :id;
 

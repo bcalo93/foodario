@@ -4,13 +4,17 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.foodario.core.domain.usecase.ObserveUseCase
 import com.foodario.core.domain.usecase.UseCase
+import com.foodario.inventory.domain.model.FoodCategory
 import com.foodario.inventory.domain.model.FoodItem
+import com.foodario.inventory.domain.model.QuantityUnit
 import com.foodario.inventory.domain.usecase.ConsumeFoodItemParams
 import com.foodario.inventory.domain.usecase.DeleteFoodItemParams
 import com.foodario.inventory.domain.usecase.ObserveFoodItemParams
 import com.foodario.inventory.domain.usecase.ToggleFrozenParams
+import com.foodario.inventory.domain.usecase.UpdateCategoryParams
 import com.foodario.inventory.domain.usecase.UpdateExpirationParams
 import com.foodario.inventory.domain.usecase.UpdateQuantityParams
+import com.foodario.inventory.domain.usecase.UpdateUnitParams
 import com.foodario.shoppinglist.domain.usecase.AddToShoppingListParams
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.SharingStarted
@@ -28,7 +32,9 @@ sealed interface FoodDetailEvent {
     data object DecrementQuantity : FoodDetailEvent
     data object Consume : FoodDetailEvent
     data object ToggleFrozen : FoodDetailEvent
+    data class CategoryChanged(val category: FoodCategory) : FoodDetailEvent
     data class ExpirationDateChanged(val date: LocalDate?) : FoodDetailEvent
+    data class UnitChanged(val unit: QuantityUnit) : FoodDetailEvent
     data object Delete : FoodDetailEvent
     data object AddToShoppingList : FoodDetailEvent
 }
@@ -36,12 +42,15 @@ sealed interface FoodDetailEvent {
 sealed interface FoodDetailEffect {
     data object AddedToShoppingList : FoodDetailEffect
     data object QuantityDepleted : FoodDetailEffect
+    data object Deleted : FoodDetailEffect
 }
 
 class FoodDetailViewModel(
     private val itemId: Long,
     private val observeFoodItem: ObserveUseCase<ObserveFoodItemParams, FoodItem?>,
     private val updateQuantity: UseCase<UpdateQuantityParams, Unit>,
+    private val updateCategory: UseCase<UpdateCategoryParams, Unit>,
+    private val updateUnit: UseCase<UpdateUnitParams, Unit>,
     private val consumeFoodItem: UseCase<ConsumeFoodItemParams, Unit>,
     private val toggleFrozen: UseCase<ToggleFrozenParams, Unit>,
     private val updateExpiration: UseCase<UpdateExpirationParams, Unit>,
@@ -80,11 +89,20 @@ class FoodDetailViewModel(
             is FoodDetailEvent.ToggleFrozen -> viewModelScope.launch {
                 runCatching { toggleFrozen(ToggleFrozenParams(itemId)) }
             }
+            is FoodDetailEvent.CategoryChanged -> viewModelScope.launch {
+                runCatching { updateCategory(UpdateCategoryParams(itemId, event.category)) }
+            }
             is FoodDetailEvent.ExpirationDateChanged -> viewModelScope.launch {
                 runCatching { updateExpiration(UpdateExpirationParams(itemId, event.date)) }
             }
+            is FoodDetailEvent.UnitChanged -> viewModelScope.launch {
+                runCatching { updateUnit(UpdateUnitParams(itemId, event.unit)) }
+            }
             is FoodDetailEvent.Delete -> viewModelScope.launch {
-                runCatching { deleteFoodItem(DeleteFoodItemParams(itemId)) }
+                val result = runCatching { deleteFoodItem(DeleteFoodItemParams(itemId)) }
+                if (result.isSuccess) {
+                    effectChannel.send(FoodDetailEffect.Deleted)
+                }
             }
             is FoodDetailEvent.AddToShoppingList -> viewModelScope.launch {
                 val item = uiState.value.item ?: return@launch

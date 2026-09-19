@@ -94,6 +94,26 @@ class InventoryRepositoryImplTest {
     }
 
     @Test
+    fun `setCategory updates category`() = runTest {
+        val repository = inMemoryRepository()
+        val added = repository.add(foodItem("Leche"))
+
+        repository.setCategory(added.id, FoodCategory.FRUITS)
+
+        assertEquals(FoodCategory.FRUITS, repository.getById(added.id)?.category)
+    }
+
+    @Test
+    fun `setUnit updates unit`() = runTest {
+        val repository = inMemoryRepository()
+        val added = repository.add(foodItem("Leche"))
+
+        repository.setUnit(added.id, QuantityUnit.GRAMS)
+
+        assertEquals(QuantityUnit.GRAMS, repository.getById(added.id)?.unit)
+    }
+
+    @Test
     fun `setFrozen toggles frozen flag`() = runTest {
         val repository = inMemoryRepository()
         val added = repository.add(foodItem("Carne", FoodCategory.MEAT))

@@ -6,6 +6,7 @@ import app.cash.sqldelight.coroutines.mapToOneOrNull
 import com.foodario.database.FoodItemQueries
 import com.foodario.inventory.domain.model.FoodCategory
 import com.foodario.inventory.domain.model.FoodItem
+import com.foodario.inventory.domain.model.QuantityUnit
 import com.foodario.inventory.domain.repository.InventoryRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -40,6 +41,26 @@ class InventoryRepositoryImpl(
         withContext(ioDispatcher) {
             queries.updateQuantity(
                 quantity = quantity,
+                updatedAt = Clock.System.now().toEpochMilliseconds(),
+                id = id,
+            )
+        }
+    }
+
+    override suspend fun setCategory(id: Long, category: FoodCategory) {
+        withContext(ioDispatcher) {
+            queries.updateCategory(
+                category = category.name,
+                updatedAt = Clock.System.now().toEpochMilliseconds(),
+                id = id,
+            )
+        }
+    }
+
+    override suspend fun setUnit(id: Long, unit: QuantityUnit) {
+        withContext(ioDispatcher) {
+            queries.updateUnit(
+                unit = unit.name,
                 updatedAt = Clock.System.now().toEpochMilliseconds(),
                 id = id,
             )

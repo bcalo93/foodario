@@ -58,6 +58,7 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.number
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Instant
 import org.koin.compose.viewmodel.koinViewModel
@@ -66,6 +67,7 @@ import org.koin.core.parameter.parametersOf
 @Composable
 fun FoodDetailScreen(
     itemId: Long,
+    onDeleted: () -> Unit = {},
     viewModel: FoodDetailViewModel = koinViewModel(parameters = { parametersOf(itemId) }),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -84,6 +86,8 @@ fun FoodDetailScreen(
                 }
 
                 FoodDetailEffect.QuantityDepleted -> showRestockDialog = true
+
+                FoodDetailEffect.Deleted -> onDeleted()
             }
         }
     }
@@ -193,7 +197,9 @@ private fun DetailContent(
 ) {
     val colors = FoodarioTheme.colors
     val typography = FoodarioTheme.typography
+    var showCategoryDialog by remember { mutableStateOf(false) }
     var showExpirationDialog by remember { mutableStateOf(false) }
+    var showUnitDialog by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -203,7 +209,10 @@ private fun DetailContent(
             .padding(end = 16.dp),
     ) {
         Spacer(Modifier.height(16.dp))
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             Text(text = item.category.emoji, fontSize = 32.sp)
             Spacer(Modifier.width(8.dp))
             Text(
@@ -215,6 +224,10 @@ private fun DetailContent(
                     .background(categoryColor(item.category))
                     .padding(horizontal = 4.dp, vertical = 1.dp),
             )
+            Spacer(Modifier.weight(1f))
+            TextButton(onClick = { showCategoryDialog = true }) {
+                Text(text = "Editar", color = colors.penBlue)
+            }
         }
         Spacer(Modifier.height(8.dp))
         Text(
@@ -232,6 +245,13 @@ private fun DetailContent(
             onIncrement = { onEvent(FoodDetailEvent.IncrementQuantity) },
             onDecrement = { onEvent(FoodDetailEvent.DecrementQuantity) },
             modifier = Modifier.fillMaxWidth(),
+        )
+        Spacer(Modifier.height(8.dp))
+
+        EditableDetailRow(
+            label = "Tipo de unidad",
+            value = item.unit.displayName,
+            onEdit = { showUnitDialog = true },
         )
         Spacer(Modifier.height(16.dp))
 
@@ -311,6 +331,51 @@ private fun DetailContent(
             },
         )
     }
+
+    if (showCategoryDialog) {
+        CategorySelectionDialog(
+            currentCategory = item.category,
+            onDismiss = { showCategoryDialog = false },
+            onSelect = { category ->
+                showCategoryDialog = false
+                onEvent(FoodDetailEvent.CategoryChanged(category))
+            },
+        )
+    }
+
+    if (showUnitDialog) {
+        UnitSelectionDialog(
+            currentUnit = item.unit,
+            onDismiss = { showUnitDialog = false },
+            onSelect = { unit ->
+                showUnitDialog = false
+                onEvent(FoodDetailEvent.UnitChanged(unit))
+            },
+        )
+    }
+}
+
+@Composable
+private fun EditableDetailRow(
+    label: String,
+    value: String,
+    onEdit: () -> Unit,
+) {
+    val colors = FoodarioTheme.colors
+    val typography = FoodarioTheme.typography
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(text = label, style = typography.label, color = colors.inkSoft)
+            Text(text = value, style = typography.body, color = colors.ink)
+        }
+        TextButton(onClick = onEdit) {
+            Text(text = "Editar", color = colors.penBlue)
+        }
+    }
 }
 
 @Composable
@@ -349,6 +414,104 @@ private fun DeleteConfirmationDialog(
                 Text(text = "Eliminar", color = colors.marginRed)
             }
         },
+    )
+}
+
+@Composable
+private fun CategorySelectionDialog(
+    currentCategory: FoodCategory,
+    onDismiss: () -> Unit,
+    onSelect: (FoodCategory) -> Unit,
+) {
+    val colors = FoodarioTheme.colors
+    val typography = FoodarioTheme.typography
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = colors.paperElevated,
+        title = {
+            Text(
+                text = "Tipo de alimento",
+                style = typography.titleHand,
+                color = colors.ink,
+            )
+        },
+        text = {
+            Column {
+                FoodCategory.entries.forEach { category ->
+                    TextButton(
+                        onClick = { onSelect(category) },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(text = category.emoji, fontSize = 24.sp)
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                text = category.displayName,
+                                style = typography.body,
+                                color = if (category == currentCategory) {
+                                    colors.penBlue
+                                } else {
+                                    colors.ink
+                                },
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {},
+    )
+}
+
+@Composable
+private fun UnitSelectionDialog(
+    currentUnit: QuantityUnit,
+    onDismiss: () -> Unit,
+    onSelect: (QuantityUnit) -> Unit,
+) {
+    val colors = FoodarioTheme.colors
+    val typography = FoodarioTheme.typography
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = colors.paperElevated,
+        title = {
+            Text(
+                text = "Tipo de unidad",
+                style = typography.titleHand,
+                color = colors.ink,
+            )
+        },
+        text = {
+            Column {
+                QuantityUnit.entries.forEach { unit ->
+                    TextButton(
+                        onClick = { onSelect(unit) },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                text = unit.displayName,
+                                style = typography.body,
+                                color = if (unit == currentUnit) {
+                                    colors.penBlue
+                                } else {
+                                    colors.ink
+                                },
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {},
     )
 }
 
@@ -448,7 +611,20 @@ private fun ExpirationDialog(
             }
         },
     ) {
-        DatePicker(state = datePickerState)
+        DatePicker(
+            state = datePickerState,
+            title = null,
+            headline = {
+                Text(
+                    text = datePickerState.selectedDateMillis
+                        ?.let { formatDate(it.toLocalDate()) }
+                        ?: "Elegí una fecha",
+                    style = FoodarioTheme.typography.titleHand,
+                    color = colors.ink,
+                    maxLines = 1,
+                )
+            },
+        )
         TextButton(
             onClick = { onSelect(null) },
             modifier = Modifier.align(Alignment.End),
@@ -466,8 +642,8 @@ private fun Long.toLocalDate(): LocalDate =
         .toLocalDateTime(TimeZone.UTC)
         .date
 
-private fun formatDate(date: LocalDate): String =
-    "${date.day.toString().padStart(2, '0')}/${date.month.toString().padStart(2, '0')}/${date.year}"
+internal fun formatDate(date: LocalDate): String =
+    "${date.day.toString().padStart(2, '0')}/${date.month.number.toString().padStart(2, '0')}/${date.year}"
 
 private const val MILLIS_PER_DAY = 86_400_000L
 
@@ -503,6 +679,8 @@ private fun FoodDetailScreenLightPreview() {
                 itemId = 1L,
                 observeFoodItem = fakeObserveFoodItemUseCase(sampleItem()),
                 updateQuantity = unitUseCase(),
+                updateCategory = unitUseCase(),
+                updateUnit = unitUseCase(),
                 consumeFoodItem = unitUseCase(),
                 toggleFrozen = unitUseCase(),
                 updateExpiration = unitUseCase(),
@@ -523,6 +701,8 @@ private fun FoodDetailScreenDarkPreview() {
                 itemId = 1L,
                 observeFoodItem = fakeObserveFoodItemUseCase(sampleItem()),
                 updateQuantity = unitUseCase(),
+                updateCategory = unitUseCase(),
+                updateUnit = unitUseCase(),
                 consumeFoodItem = unitUseCase(),
                 toggleFrozen = unitUseCase(),
                 updateExpiration = unitUseCase(),

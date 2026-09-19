@@ -7,7 +7,9 @@ import com.foodario.core.domain.usecase.UseCase
 import com.foodario.inventory.domain.model.FoodCategory
 import com.foodario.inventory.domain.model.FoodItem
 import com.foodario.inventory.domain.usecase.AddFoodItemParams
+import com.foodario.inventory.domain.usecase.DeleteFoodItemParams
 import com.foodario.inventory.domain.usecase.ObserveInventoryParams
+import com.foodario.inventory.domain.usecase.UpdateQuantityParams
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -26,12 +28,16 @@ sealed interface InventoryEvent {
     data class CategorySelected(val category: FoodCategory?) : InventoryEvent
     data class QuickAdd(val name: String) : InventoryEvent
     data class QuickAddCategorySelected(val category: FoodCategory) : InventoryEvent
+    data class IncreaseQuantity(val itemId: Long, val currentQuantity: Double) : InventoryEvent
+    data class Delete(val itemId: Long) : InventoryEvent
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class InventoryViewModel(
     private val observeInventory: ObserveUseCase<ObserveInventoryParams, List<FoodItem>>,
     private val addFoodItem: UseCase<AddFoodItemParams, FoodItem>,
+    private val updateQuantity: UseCase<UpdateQuantityParams, Unit>,
+    private val deleteFoodItem: UseCase<DeleteFoodItemParams, Unit>,
 ) : ViewModel() {
 
     private val searchQuery = MutableStateFlow("")
@@ -87,6 +93,19 @@ class InventoryViewModel(
                 runCatching {
                     addFoodItem(AddFoodItemParams(name = event.name, category = addCategory.value))
                 }
+            }
+            is InventoryEvent.IncreaseQuantity -> viewModelScope.launch {
+                runCatching {
+                    updateQuantity(
+                        UpdateQuantityParams(
+                            itemId = event.itemId,
+                            newQuantity = event.currentQuantity + 1.0,
+                        )
+                    )
+                }
+            }
+            is InventoryEvent.Delete -> viewModelScope.launch {
+                runCatching { deleteFoodItem(DeleteFoodItemParams(event.itemId)) }
             }
         }
     }

@@ -1,5 +1,6 @@
 package com.foodario.shoppinglist.presentation
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -27,6 +29,8 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -197,10 +201,7 @@ private fun ShoppingListRow(
 private fun MoveToInventoryButton(onClick: () -> Unit) {
     val colors = FoodarioTheme.colors
     val shape = RoundedCornerShape(8.dp)
-    Text(
-        text = "→ heladera",
-        style = FoodarioTheme.typography.label,
-        color = colors.penBlue,
+    Row(
         modifier = Modifier
             .clip(shape)
             .background(colors.paperElevated)
@@ -208,7 +209,35 @@ private fun MoveToInventoryButton(onClick: () -> Unit) {
             .defaultMinSize(minHeight = 40.dp)
             .clickable(onClick = onClick)
             .padding(horizontal = 10.dp, vertical = 8.dp),
-    )
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = "heladera",
+            style = FoodarioTheme.typography.label,
+            color = colors.penBlue,
+        )
+        Canvas(
+            modifier = Modifier
+                .size(width = 12.dp, height = 20.dp)
+                .semantics { contentDescription = "Ir a la heladera" },
+        ) {
+            val stroke = 2.dp.toPx()
+            drawLine(
+                color = colors.penBlue,
+                start = androidx.compose.ui.geometry.Offset(1.dp.toPx(), size.height * 0.2f),
+                end = androidx.compose.ui.geometry.Offset(size.width - 1.dp.toPx(), size.height / 2f),
+                strokeWidth = stroke,
+                cap = StrokeCap.Round,
+            )
+            drawLine(
+                color = colors.penBlue,
+                start = androidx.compose.ui.geometry.Offset(size.width - 1.dp.toPx(), size.height / 2f),
+                end = androidx.compose.ui.geometry.Offset(1.dp.toPx(), size.height * 0.8f),
+                strokeWidth = stroke,
+                cap = StrokeCap.Round,
+            )
+        }
+    }
 }
 
 @Composable
