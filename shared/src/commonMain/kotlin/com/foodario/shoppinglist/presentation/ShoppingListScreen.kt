@@ -173,7 +173,7 @@ private fun ShoppingListRow(
                     Text(text = category.emoji, fontSize = 16.sp)
                     Spacer(Modifier.width(4.dp))
                     Text(
-                        text = category.name,
+                        text = category.displayName,
                         style = typography.label,
                         color = colors.inkSoft,
                     )

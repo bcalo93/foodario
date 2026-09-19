@@ -97,7 +97,7 @@ fun NotebookListItem(
             }
             Spacer(Modifier.height(2.dp))
             Text(
-                text = category.name,
+                text = category.displayName,
                 style = typography.labelHand,
                 color = colors.ink,
                 modifier = Modifier

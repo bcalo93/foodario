@@ -22,6 +22,9 @@ SELECT * FROM food_item WHERE name LIKE '%' || :query || '%' ORDER BY name ASC;
 selectById:
 SELECT * FROM food_item WHERE id = :id;
 
+selectByName:
+SELECT * FROM food_item WHERE name = :name ORDER BY id ASC LIMIT 1;
+
 selectExpiringBefore:
 SELECT * FROM food_item
 WHERE expiration_date IS NOT NULL AND expiration_date <= :threshold

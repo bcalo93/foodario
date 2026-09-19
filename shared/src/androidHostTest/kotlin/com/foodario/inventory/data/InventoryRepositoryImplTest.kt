@@ -52,6 +52,16 @@ class InventoryRepositoryImplTest {
     }
 
     @Test
+    fun `findByName returns the first matching item`() = runTest {
+        val repository = inMemoryRepository()
+        repository.add(foodItem("Leche", quantity = 2.0))
+
+        val result = repository.findByName("Leche")
+
+        assertEquals(2.0, result?.quantity)
+    }
+
+    @Test
     fun `observeInventory filters by category`() = runTest {
         val repository = inMemoryRepository()
         repository.add(foodItem("Leche", FoodCategory.DAIRY))

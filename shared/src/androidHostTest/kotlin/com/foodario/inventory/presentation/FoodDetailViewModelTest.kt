@@ -137,6 +137,23 @@ class FoodDetailViewModelTest {
     }
 
     @Test
+    fun `consume at zero emits quantity depleted effect`() = runTest {
+        every { observeFoodItem(ObserveFoodItemParams(itemId)) } returns flowOf(leche.copy(quantity = 1.0))
+        coEvery { consumeFoodItem(any()) } returns Unit
+        val viewModel = viewModel()
+
+        viewModel.uiState.test {
+            awaitLoaded()
+            viewModel.effects.test {
+                viewModel.onEvent(FoodDetailEvent.Consume)
+                assertEquals(FoodDetailEffect.QuantityDepleted, awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
     fun `toggle frozen calls toggle use case`() = runTest {
         every { observeFoodItem(ObserveFoodItemParams(itemId)) } returns flowOf(leche)
         coEvery { toggleFrozen(any()) } returns Unit
@@ -190,7 +207,11 @@ class FoodDetailViewModelTest {
 
         viewModel.uiState.test {
             awaitLoaded()
-            viewModel.onEvent(FoodDetailEvent.AddToShoppingList)
+            viewModel.effects.test {
+                viewModel.onEvent(FoodDetailEvent.AddToShoppingList)
+                assertEquals(FoodDetailEffect.AddedToShoppingList, awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
             cancelAndIgnoreRemainingEvents()
         }
 

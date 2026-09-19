@@ -268,7 +268,7 @@ private fun FilterChip(
     ) {
         Text(text = category.emoji, fontSize = 16.sp)
         Text(
-            text = category.name,
+            text = category.displayName,
             style = typography.labelHand,
             color = colors.ink,
         )

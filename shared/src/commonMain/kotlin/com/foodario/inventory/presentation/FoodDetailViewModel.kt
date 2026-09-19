@@ -12,11 +12,13 @@ import com.foodario.inventory.domain.usecase.ToggleFrozenParams
 import com.foodario.inventory.domain.usecase.UpdateExpirationParams
 import com.foodario.inventory.domain.usecase.UpdateQuantityParams
 import com.foodario.shoppinglist.domain.usecase.AddToShoppingListParams
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
@@ -31,6 +33,11 @@ sealed interface FoodDetailEvent {
     data object AddToShoppingList : FoodDetailEvent
 }
 
+sealed interface FoodDetailEffect {
+    data object AddedToShoppingList : FoodDetailEffect
+    data object QuantityDepleted : FoodDetailEffect
+}
+
 class FoodDetailViewModel(
     private val itemId: Long,
     private val observeFoodItem: ObserveUseCase<ObserveFoodItemParams, FoodItem?>,
@@ -41,6 +48,10 @@ class FoodDetailViewModel(
     private val deleteFoodItem: UseCase<DeleteFoodItemParams, Unit>,
     private val addToShoppingList: UseCase<AddToShoppingListParams, Unit>,
 ) : ViewModel() {
+
+    private val effectChannel = Channel<FoodDetailEffect>(Channel.BUFFERED)
+
+    val effects = effectChannel.receiveAsFlow()
 
     val uiState: StateFlow<FoodDetailUiState> =
         observeFoodItem(ObserveFoodItemParams(itemId))
@@ -57,8 +68,14 @@ class FoodDetailViewModel(
         when (event) {
             is FoodDetailEvent.IncrementQuantity -> mutateQuantity { it + 1.0 }
             is FoodDetailEvent.DecrementQuantity -> mutateQuantity { (it - 1.0).coerceAtLeast(0.0) }
-            is FoodDetailEvent.Consume -> viewModelScope.launch {
-                runCatching { consumeFoodItem(ConsumeFoodItemParams(itemId)) }
+            is FoodDetailEvent.Consume -> {
+                val item = uiState.value.item ?: return
+                viewModelScope.launch {
+                    val result = runCatching { consumeFoodItem(ConsumeFoodItemParams(itemId)) }
+                    if (result.isSuccess && item.quantity <= 1.0) {
+                        effectChannel.send(FoodDetailEffect.QuantityDepleted)
+                    }
+                }
             }
             is FoodDetailEvent.ToggleFrozen -> viewModelScope.launch {
                 runCatching { toggleFrozen(ToggleFrozenParams(itemId)) }
@@ -71,15 +88,18 @@ class FoodDetailViewModel(
             }
             is FoodDetailEvent.AddToShoppingList -> viewModelScope.launch {
                 val item = uiState.value.item ?: return@launch
-                runCatching {
+                val result = runCatching {
                     addToShoppingList(
                         AddToShoppingListParams(
                             name = item.name,
                             category = item.category,
-                            quantity = item.quantity,
-                            unit = item.unit,
+                            quantity = item.quantity.takeIf { it > 0.0 },
+                            unit = item.unit.takeIf { item.quantity > 0.0 },
                         )
                     )
+                }
+                if (result.isSuccess) {
+                    effectChannel.send(FoodDetailEffect.AddedToShoppingList)
                 }
             }
         }
@@ -89,7 +109,10 @@ class FoodDetailViewModel(
         val item = uiState.value.item ?: return
         val newQuantity = transform(item.quantity)
         viewModelScope.launch {
-            runCatching { updateQuantity(UpdateQuantityParams(itemId, newQuantity)) }
+            val result = runCatching { updateQuantity(UpdateQuantityParams(itemId, newQuantity)) }
+            if (result.isSuccess && newQuantity == 0.0) {
+                effectChannel.send(FoodDetailEffect.QuantityDepleted)
+            }
         }
     }
 }

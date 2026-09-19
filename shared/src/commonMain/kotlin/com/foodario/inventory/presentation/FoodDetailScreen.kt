@@ -3,7 +3,6 @@ package com.foodario.inventory.presentation
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -18,9 +17,15 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -34,6 +39,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.material3.rememberDatePickerState
 import com.foodario.core.domain.usecase.ObserveUseCase
 import com.foodario.core.domain.usecase.UseCase
 import com.foodario.core.presentation.components.DoodleDivider
@@ -48,11 +54,11 @@ import com.foodario.inventory.domain.model.FoodItem
 import com.foodario.inventory.domain.model.QuantityUnit
 import com.foodario.inventory.domain.usecase.ObserveFoodItemParams
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import kotlin.time.Clock
 import kotlin.time.Instant
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -65,64 +71,116 @@ fun FoodDetailScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val colors = FoodarioTheme.colors
     val typography = FoodarioTheme.typography
+    val snackbarHostState = remember { SnackbarHostState() }
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var showRestockDialog by remember { mutableStateOf(false) }
+    val item = uiState.item
 
-    Column(
+    LaunchedEffect(viewModel) {
+        viewModel.effects.collect { effect ->
+            when (effect) {
+                FoodDetailEffect.AddedToShoppingList -> {
+                    snackbarHostState.showSnackbar("Agregado a la lista de compras")
+                }
+
+                FoodDetailEffect.QuantityDepleted -> showRestockDialog = true
+            }
+        }
+    }
+
+    Box(
         modifier = Modifier
             .fillMaxSize()
             .background(colors.paper),
     ) {
-        when {
-            uiState.isLoading -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .notebookMargin(),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    CircularProgressIndicator(color = colors.penBlue)
+        Column(modifier = Modifier.fillMaxSize()) {
+            when {
+                uiState.isLoading -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .notebookMargin(),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        CircularProgressIndicator(color = colors.penBlue)
+                    }
                 }
-            }
 
-            uiState.error != null -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .notebookMargin()
-                        .padding(end = 16.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = uiState.error.orEmpty(),
-                        style = typography.body,
-                        color = colors.marginRed,
-                        textAlign = TextAlign.Center,
+                uiState.error != null -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .notebookMargin()
+                            .padding(end = 16.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            text = uiState.error.orEmpty(),
+                            style = typography.body,
+                            color = colors.marginRed,
+                            textAlign = TextAlign.Center,
+                        )
+                    }
+                }
+
+                item == null -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .notebookMargin()
+                            .padding(end = 16.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            text = "Este alimento ya no está",
+                            style = typography.titleHand,
+                            color = colors.inkSoft,
+                            textAlign = TextAlign.Center,
+                        )
+                    }
+                }
+
+                else -> {
+                    DetailContent(
+                        item = item,
+                        onEvent = viewModel::onEvent,
+                        onDeleteRequest = { showDeleteDialog = true },
                     )
                 }
             }
+        }
 
-            uiState.item == null -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .notebookMargin()
-                        .padding(end = 16.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = "Este alimento ya no está",
-                        style = typography.titleHand,
-                        color = colors.inkSoft,
-                        textAlign = TextAlign.Center,
-                    )
-                }
-            }
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(16.dp),
+        )
 
-            else -> {
-                DetailContent(
-                    item = uiState.item!!,
-                    onEvent = viewModel::onEvent,
-                )
-            }
+        if (showDeleteDialog && item != null) {
+            DeleteConfirmationDialog(
+                itemName = item.name,
+                onDismiss = { showDeleteDialog = false },
+                onConfirm = {
+                    showDeleteDialog = false
+                    viewModel.onEvent(FoodDetailEvent.Delete)
+                },
+            )
+        }
+
+        if (showRestockDialog && item != null) {
+            RestockDialog(
+                itemName = item.name,
+                onDismiss = { showRestockDialog = false },
+                onAddToShoppingList = {
+                    showRestockDialog = false
+                    viewModel.onEvent(FoodDetailEvent.AddToShoppingList)
+                },
+                onDelete = {
+                    showRestockDialog = false
+                    viewModel.onEvent(FoodDetailEvent.Delete)
+                },
+            )
         }
     }
 }
@@ -131,6 +189,7 @@ fun FoodDetailScreen(
 private fun DetailContent(
     item: FoodItem,
     onEvent: (FoodDetailEvent) -> Unit,
+    onDeleteRequest: () -> Unit,
 ) {
     val colors = FoodarioTheme.colors
     val typography = FoodarioTheme.typography
@@ -148,7 +207,7 @@ private fun DetailContent(
             Text(text = item.category.emoji, fontSize = 32.sp)
             Spacer(Modifier.width(8.dp))
             Text(
-                text = item.category.name,
+                text = item.category.displayName,
                 style = typography.labelHand,
                 color = colors.ink,
                 modifier = Modifier
@@ -236,7 +295,7 @@ private fun DetailContent(
         DetailActionButton(
             text = "Eliminar",
             color = colors.marginRed,
-            onClick = { onEvent(FoodDetailEvent.Delete) },
+            onClick = onDeleteRequest,
             modifier = Modifier.fillMaxWidth(),
         )
         Spacer(Modifier.height(24.dp))
@@ -244,6 +303,7 @@ private fun DetailContent(
 
     if (showExpirationDialog) {
         ExpirationDialog(
+            currentDate = item.expirationDate,
             onDismiss = { showExpirationDialog = false },
             onSelect = { date ->
                 showExpirationDialog = false
@@ -251,6 +311,90 @@ private fun DetailContent(
             },
         )
     }
+}
+
+@Composable
+private fun DeleteConfirmationDialog(
+    itemName: String,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
+) {
+    val colors = FoodarioTheme.colors
+    val typography = FoodarioTheme.typography
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = colors.paperElevated,
+        title = {
+            Text(
+                text = "¿Eliminar alimento?",
+                style = typography.titleHand,
+                color = colors.ink,
+            )
+        },
+        text = {
+            Text(
+                text = "Se va a eliminar \"$itemName\" de tu heladera.",
+                style = typography.body,
+                color = colors.ink,
+            )
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(text = "Cancelar", color = colors.inkSoft)
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text(text = "Eliminar", color = colors.marginRed)
+            }
+        },
+    )
+}
+
+@Composable
+private fun RestockDialog(
+    itemName: String,
+    onDismiss: () -> Unit,
+    onAddToShoppingList: () -> Unit,
+    onDelete: () -> Unit,
+) {
+    val colors = FoodarioTheme.colors
+    val typography = FoodarioTheme.typography
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = colors.paperElevated,
+        title = {
+            Text(
+                text = "Se terminó $itemName",
+                style = typography.titleHand,
+                color = colors.ink,
+            )
+        },
+        text = {
+            Column {
+                Text(
+                    text = "¿Querés volver a comprarlo?",
+                    style = typography.body,
+                    color = colors.ink,
+                )
+                TextButton(onClick = onDelete) {
+                    Text(text = "Eliminar alimento", color = colors.marginRed)
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(text = "Ahora no", color = colors.inkSoft)
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onAddToShoppingList) {
+                Text(text = "Agregar a compras", color = colors.penBlue)
+            }
+        },
+    )
 }
 
 @Composable
@@ -274,72 +418,58 @@ private fun DetailActionButton(
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ExpirationDialog(
+    currentDate: LocalDate?,
     onDismiss: () -> Unit,
     onSelect: (LocalDate?) -> Unit,
 ) {
     val colors = FoodarioTheme.colors
-    val typography = FoodarioTheme.typography
-    val options = listOf(
-        "Hoy" to 0,
-        "+1 día" to 1,
-        "+3 días" to 3,
-        "+7 días" to 7,
+    val datePickerState = rememberDatePickerState(
+        initialSelectedDateMillis = currentDate?.toPickerDateMillis(),
     )
 
-    AlertDialog(
+    DatePickerDialog(
         onDismissRequest = onDismiss,
-        containerColor = colors.paperElevated,
-        title = {
-            Text(
-                text = "Vencimiento",
-                style = typography.titleHand,
-                color = colors.ink,
-            )
-        },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                options.forEach { (label, days) ->
-                    Text(
-                        text = label,
-                        style = typography.body,
-                        color = colors.ink,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { onSelect(daysFromToday(days)) }
-                            .padding(vertical = 8.dp),
-                    )
-                }
-                Text(
-                    text = "Sin vencimiento",
-                    style = typography.body,
-                    color = colors.marginRed,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { onSelect(null) }
-                        .padding(vertical = 8.dp),
-                )
+        confirmButton = {
+            TextButton(
+                enabled = datePickerState.selectedDateMillis != null,
+                onClick = {
+                    datePickerState.selectedDateMillis?.let { onSelect(it.toLocalDate()) }
+                },
+            ) {
+                Text(text = "Guardar", color = colors.penBlue)
             }
         },
-        confirmButton = {
+        dismissButton = {
             TextButton(onClick = onDismiss) {
                 Text(text = "Cancelar", color = colors.inkSoft)
             }
         },
-    )
+    ) {
+        DatePicker(state = datePickerState)
+        TextButton(
+            onClick = { onSelect(null) },
+            modifier = Modifier.align(Alignment.End),
+        ) {
+            Text(text = "Sin vencimiento", color = colors.marginRed)
+        }
+    }
 }
 
-private fun daysFromToday(days: Int): LocalDate =
-    LocalDate.fromEpochDays(
-        Clock.System.now()
-            .toLocalDateTime(TimeZone.currentSystemDefault())
-            .date
-            .toEpochDays() + days
-    )
+private fun LocalDate.toPickerDateMillis(): Long =
+    toEpochDays() * MILLIS_PER_DAY
+
+private fun Long.toLocalDate(): LocalDate =
+    Instant.fromEpochMilliseconds(this)
+        .toLocalDateTime(TimeZone.UTC)
+        .date
 
 private fun formatDate(date: LocalDate): String =
-    "${date.dayOfMonth.toString().padStart(2, '0')}/${date.monthNumber.toString().padStart(2, '0')}/${date.year}"
+    "${date.day.toString().padStart(2, '0')}/${date.month.toString().padStart(2, '0')}/${date.year}"
+
+private const val MILLIS_PER_DAY = 86_400_000L
 
 private fun <P> unitUseCase(): UseCase<P, Unit> =
     object : UseCase<P, Unit> {
