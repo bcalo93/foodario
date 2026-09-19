@@ -78,6 +78,7 @@ kotlin {
         getByName("androidHostTest").dependencies {
             implementation(libs.kotlin.test)
             implementation(libs.mockk)
+            implementation(libs.koin.test)
             implementation(libs.sqldelight.sqlite.driver)
         }
     }
