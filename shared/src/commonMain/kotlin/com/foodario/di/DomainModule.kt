@@ -28,19 +28,20 @@ import com.foodario.shoppinglist.domain.usecase.ObserveShoppingListParams
 import com.foodario.shoppinglist.domain.usecase.ObserveShoppingListUseCase
 import com.foodario.shoppinglist.domain.usecase.RemoveFromShoppingListParams
 import com.foodario.shoppinglist.domain.usecase.RemoveFromShoppingListUseCase
+import org.koin.core.qualifier.named
 import org.koin.dsl.module
 
 val domainModule = module {
-    factory<ObserveUseCase<ObserveInventoryParams, List<FoodItem>>> { ObserveInventoryUseCase(get()) }
-    factory<UseCase<AddFoodItemParams, FoodItem>> { AddFoodItemUseCase(get()) }
-    factory<UseCase<UpdateQuantityParams, Unit>> { UpdateQuantityUseCase(get()) }
-    factory<UseCase<ConsumeFoodItemParams, Unit>> { ConsumeFoodItemUseCase(get()) }
-    factory<UseCase<DeleteFoodItemParams, Unit>> { DeleteFoodItemUseCase(get()) }
-    factory<UseCase<ToggleFrozenParams, Unit>> { ToggleFrozenUseCase(get()) }
-    factory<UseCase<UpdateExpirationParams, Unit>> { UpdateExpirationUseCase(get()) }
-    factory<ObserveUseCase<ObserveFoodItemParams, FoodItem?>> { ObserveFoodItemUseCase(get()) }
-    factory<ObserveUseCase<ObserveShoppingListParams, List<ShoppingItem>>> { ObserveShoppingListUseCase(get()) }
-    factory<UseCase<AddToShoppingListParams, Unit>> { AddToShoppingListUseCase(get()) }
-    factory<UseCase<RemoveFromShoppingListParams, Unit>> { RemoveFromShoppingListUseCase(get()) }
-    factory<UseCase<MoveToInventoryParams, FoodItem>> { MoveToInventoryUseCase(get(), get()) }
+    factory<ObserveUseCase<ObserveInventoryParams, List<FoodItem>>>(named("observeInventory")) { ObserveInventoryUseCase(get()) }
+    factory<UseCase<AddFoodItemParams, FoodItem>>(named("addFoodItem")) { AddFoodItemUseCase(get()) }
+    factory<UseCase<UpdateQuantityParams, Unit>>(named("updateQuantity")) { UpdateQuantityUseCase(get()) }
+    factory<UseCase<ConsumeFoodItemParams, Unit>>(named("consumeFoodItem")) { ConsumeFoodItemUseCase(get()) }
+    factory<UseCase<DeleteFoodItemParams, Unit>>(named("deleteFoodItem")) { DeleteFoodItemUseCase(get()) }
+    factory<UseCase<ToggleFrozenParams, Unit>>(named("toggleFrozen")) { ToggleFrozenUseCase(get()) }
+    factory<UseCase<UpdateExpirationParams, Unit>>(named("updateExpiration")) { UpdateExpirationUseCase(get()) }
+    factory<ObserveUseCase<ObserveFoodItemParams, FoodItem?>>(named("observeFoodItem")) { ObserveFoodItemUseCase(get()) }
+    factory<ObserveUseCase<ObserveShoppingListParams, List<ShoppingItem>>>(named("observeShoppingList")) { ObserveShoppingListUseCase(get()) }
+    factory<UseCase<AddToShoppingListParams, Unit>>(named("addToShoppingList")) { AddToShoppingListUseCase(get()) }
+    factory<UseCase<RemoveFromShoppingListParams, Unit>>(named("removeFromShoppingList")) { RemoveFromShoppingListUseCase(get()) }
+    factory<UseCase<MoveToInventoryParams, FoodItem>>(named("moveToInventory")) { MoveToInventoryUseCase(get(), get()) }
 }
