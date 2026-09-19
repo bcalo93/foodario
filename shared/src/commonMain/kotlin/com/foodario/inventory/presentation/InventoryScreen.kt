@@ -25,10 +25,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -79,7 +77,6 @@ fun InventoryScreen(
     val quickAddCategory by viewModel.quickAddCategory.collectAsStateWithLifecycle()
     val colors = FoodarioTheme.colors
     val typography = FoodarioTheme.typography
-    var itemToDelete by remember { mutableStateOf<FoodItem?>(null) }
 
     Column(
         modifier = Modifier
@@ -188,7 +185,7 @@ fun InventoryScreen(
                                     )
                                 )
                             },
-                            onDeleteRequest = { itemToDelete = item },
+                            onDelete = { viewModel.onEvent(InventoryEvent.Delete(item.id)) },
                             modifier = Modifier.animateItem(),
                         )
                     }
@@ -196,16 +193,6 @@ fun InventoryScreen(
             }
         }
 
-        itemToDelete?.let { item ->
-            InventoryDeleteConfirmationDialog(
-                itemName = item.name,
-                onDismiss = { itemToDelete = null },
-                onConfirm = {
-                    itemToDelete = null
-                    viewModel.onEvent(InventoryEvent.Delete(item.id))
-                },
-            )
-        }
     }
 }
 
@@ -214,13 +201,13 @@ private fun SwipeableInventoryItem(
     item: FoodItem,
     onClick: () -> Unit,
     onIncreaseQuantity: () -> Unit,
-    onDeleteRequest: () -> Unit,
+    onDelete: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colors = FoodarioTheme.colors
     val typography = FoodarioTheme.typography
     val density = LocalDensity.current
-    val maxSwipeDistance = with(density) { 112.dp.toPx() }
+    val actionWidth = with(density) { 96.dp.toPx() }
     val swipeThreshold = with(density) { 64.dp.toPx() }
     var offsetX by remember(item.id) { mutableStateOf(0f) }
 
@@ -229,29 +216,36 @@ private fun SwipeableInventoryItem(
             .fillMaxWidth()
             .background(colors.paper),
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    if (offsetX < 0f) {
-                        colors.marginRed.copy(alpha = 0.12f)
-                    } else {
-                        colors.penBlue.copy(alpha = 0.12f)
+        if (offsetX != 0f) {
+            Row(
+                modifier = Modifier
+                    .matchParentSize()
+                    .background(
+                        if (offsetX < 0f) {
+                            colors.marginRed.copy(alpha = 0.12f)
+                        } else {
+                            colors.penBlue.copy(alpha = 0.12f)
+                        }
+                    )
+                    .clickable {
+                        val isDeleteAction = offsetX < 0f
+                        offsetX = 0f
+                        if (isDeleteAction) onDelete() else onIncreaseQuantity()
                     }
+                    .padding(horizontal = 20.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = if (offsetX < 0f) {
+                    Arrangement.End
+                } else {
+                    Arrangement.Start
+                },
+            ) {
+                Text(
+                    text = if (offsetX < 0f) "Eliminar" else "+1",
+                    style = typography.labelHand,
+                    color = if (offsetX < 0f) colors.marginRed else colors.penBlue,
                 )
-                .padding(horizontal = 20.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = if (offsetX < 0f) {
-                Arrangement.End
-            } else {
-                Arrangement.Start
-            },
-        ) {
-            Text(
-                text = if (offsetX < 0f) "Eliminar" else "+1",
-                style = typography.labelHand,
-                color = if (offsetX < 0f) colors.marginRed else colors.penBlue,
-            )
+            }
         }
 
         NotebookListItem(
@@ -260,64 +254,31 @@ private fun SwipeableInventoryItem(
             quantity = item.quantity,
             unit = item.unit,
             isFrozen = item.isFrozen,
-            onClick = onClick,
+            onClick = { if (offsetX == 0f) onClick() else offsetX = 0f },
             modifier = Modifier
                 .offset { IntOffset(offsetX.roundToInt(), 0) }
+                .background(colors.paper)
                 .draggable(
                     state = rememberDraggableState { delta ->
-                        offsetX = (offsetX + delta).coerceIn(-maxSwipeDistance, maxSwipeDistance)
+                        offsetX = (offsetX + delta).coerceIn(-actionWidth, actionWidth)
                     },
                     orientation = Orientation.Horizontal,
                     onDragStopped = {
                         val swipe = offsetX
-                        offsetX = 0f
-                        when {
-                            swipe <= -swipeThreshold -> onDeleteRequest()
-                            swipe >= swipeThreshold -> onIncreaseQuantity()
+                        if (swipe >= actionWidth) {
+                            offsetX = 0f
+                            onIncreaseQuantity()
+                        } else {
+                            offsetX = when {
+                                swipe <= -swipeThreshold -> -actionWidth
+                                swipe >= swipeThreshold -> actionWidth
+                                else -> 0f
+                            }
                         }
                     },
                 ),
         )
     }
-}
-
-@Composable
-private fun InventoryDeleteConfirmationDialog(
-    itemName: String,
-    onDismiss: () -> Unit,
-    onConfirm: () -> Unit,
-) {
-    val colors = FoodarioTheme.colors
-    val typography = FoodarioTheme.typography
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        containerColor = colors.paperElevated,
-        title = {
-            Text(
-                text = "¿Eliminar alimento?",
-                style = typography.titleHand,
-                color = colors.ink,
-            )
-        },
-        text = {
-            Text(
-                text = "Se va a eliminar \"$itemName\" de tu heladera.",
-                style = typography.body,
-                color = colors.ink,
-            )
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(text = "Cancelar", color = colors.inkSoft)
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onConfirm) {
-                Text(text = "Eliminar", color = colors.marginRed)
-            }
-        },
-    )
 }
 
 @Composable
