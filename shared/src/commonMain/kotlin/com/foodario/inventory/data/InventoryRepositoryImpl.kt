@@ -2,6 +2,7 @@ package com.foodario.inventory.data
 
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
+import app.cash.sqldelight.coroutines.mapToOneOrNull
 import com.foodario.database.FoodItemQueries
 import com.foodario.inventory.domain.model.FoodCategory
 import com.foodario.inventory.domain.model.FoodItem
@@ -12,6 +13,7 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
+import kotlinx.datetime.LocalDate
 import kotlin.time.Clock
 
 class InventoryRepositoryImpl(
@@ -54,6 +56,16 @@ class InventoryRepositoryImpl(
         }
     }
 
+    override suspend fun setExpirationDate(id: Long, expirationDate: LocalDate?) {
+        withContext(ioDispatcher) {
+            queries.updateExpiration(
+                expirationDate = expirationDate?.let { it.toEpochDays() * MILLIS_PER_DAY },
+                updatedAt = Clock.System.now().toEpochMilliseconds(),
+                id = id,
+            )
+        }
+    }
+
     override suspend fun delete(id: Long) {
         withContext(ioDispatcher) {
             queries.delete(id = id)
@@ -75,6 +87,14 @@ class InventoryRepositoryImpl(
             .map { entities -> entities.map { it.toDomain() }.filterByCategory(category) }
     }
 
+    override fun observeById(id: Long): Flow<FoodItem?> =
+        queries.selectById(id = id)
+            .asFlow()
+            .mapToOneOrNull(ioDispatcher)
+            .map { it?.toDomain() }
+
     private fun List<FoodItem>.filterByCategory(category: FoodCategory?): List<FoodItem> =
         if (category == null) this else filter { it.category == category }
 }
+
+private const val MILLIS_PER_DAY = 86_400_000L

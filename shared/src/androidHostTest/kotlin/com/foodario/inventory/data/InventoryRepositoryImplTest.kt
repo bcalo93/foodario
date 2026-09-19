@@ -8,6 +8,7 @@ import com.foodario.inventory.domain.model.QuantityUnit
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
+import kotlinx.datetime.LocalDate
 import kotlin.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -100,5 +101,29 @@ class InventoryRepositoryImplTest {
         repository.delete(added.id)
 
         assertNull(repository.getById(added.id))
+    }
+
+    @Test
+    fun `setExpirationDate persists and clears expiration date`() = runTest {
+        val repository = inMemoryRepository()
+        val added = repository.add(foodItem("Leche"))
+        val date = LocalDate.fromEpochDays(20_000)
+
+        repository.setExpirationDate(added.id, date)
+        assertEquals(date, repository.getById(added.id)?.expirationDate)
+
+        repository.setExpirationDate(added.id, null)
+        assertNull(repository.getById(added.id)?.expirationDate)
+    }
+
+    @Test
+    fun `observeById emits item then null after delete`() = runTest {
+        val repository = inMemoryRepository()
+        val added = repository.add(foodItem("Leche"))
+
+        assertEquals("Leche", repository.observeById(added.id).first()?.name)
+
+        repository.delete(added.id)
+        assertNull(repository.observeById(added.id).first())
     }
 }

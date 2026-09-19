@@ -12,6 +12,7 @@ import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.test.runTest
+import kotlinx.datetime.LocalDate
 import kotlin.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -150,5 +151,28 @@ class InventoryUseCasesTest {
         useCase(ObserveInventoryParams(query = "lech", category = FoodCategory.DAIRY))
 
         verify { repository.observeInventory("lech", FoodCategory.DAIRY) }
+    }
+
+    @Test
+    fun `updateExpiration delegates to repository`() = runTest {
+        val repository = mockk<InventoryRepository>()
+        val date = LocalDate.fromEpochDays(20_000)
+        coEvery { repository.setExpirationDate(1L, date) } returns Unit
+        val useCase = UpdateExpirationUseCase(repository)
+
+        useCase(UpdateExpirationParams(itemId = 1L, expirationDate = date))
+
+        coVerify { repository.setExpirationDate(1L, date) }
+    }
+
+    @Test
+    fun `updateExpiration with null clears expiration`() = runTest {
+        val repository = mockk<InventoryRepository>()
+        coEvery { repository.setExpirationDate(1L, null) } returns Unit
+        val useCase = UpdateExpirationUseCase(repository)
+
+        useCase(UpdateExpirationParams(itemId = 1L, expirationDate = null))
+
+        coVerify { repository.setExpirationDate(1L, null) }
     }
 }

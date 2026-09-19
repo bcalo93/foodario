@@ -11,8 +11,12 @@ import com.foodario.inventory.domain.usecase.DeleteFoodItemParams
 import com.foodario.inventory.domain.usecase.DeleteFoodItemUseCase
 import com.foodario.inventory.domain.usecase.ObserveInventoryParams
 import com.foodario.inventory.domain.usecase.ObserveInventoryUseCase
+import com.foodario.inventory.domain.usecase.ObserveFoodItemParams
+import com.foodario.inventory.domain.usecase.ObserveFoodItemUseCase
 import com.foodario.inventory.domain.usecase.ToggleFrozenParams
 import com.foodario.inventory.domain.usecase.ToggleFrozenUseCase
+import com.foodario.inventory.domain.usecase.UpdateExpirationParams
+import com.foodario.inventory.domain.usecase.UpdateExpirationUseCase
 import com.foodario.inventory.domain.usecase.UpdateQuantityParams
 import com.foodario.inventory.domain.usecase.UpdateQuantityUseCase
 import com.foodario.shoppinglist.domain.model.ShoppingItem
@@ -33,6 +37,8 @@ val domainModule = module {
     factory<UseCase<ConsumeFoodItemParams, Unit>> { ConsumeFoodItemUseCase(get()) }
     factory<UseCase<DeleteFoodItemParams, Unit>> { DeleteFoodItemUseCase(get()) }
     factory<UseCase<ToggleFrozenParams, Unit>> { ToggleFrozenUseCase(get()) }
+    factory<UseCase<UpdateExpirationParams, Unit>> { UpdateExpirationUseCase(get()) }
+    factory<ObserveUseCase<ObserveFoodItemParams, FoodItem?>> { ObserveFoodItemUseCase(get()) }
     factory<ObserveUseCase<ObserveShoppingListParams, List<ShoppingItem>>> { ObserveShoppingListUseCase(get()) }
     factory<UseCase<AddToShoppingListParams, Unit>> { AddToShoppingListUseCase(get()) }
     factory<UseCase<RemoveFromShoppingListParams, Unit>> { RemoveFromShoppingListUseCase(get()) }

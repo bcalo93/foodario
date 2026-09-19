@@ -83,6 +83,19 @@ class ToggleFrozenUseCase(
     }
 }
 
+data class UpdateExpirationParams(
+    val itemId: Long,
+    val expirationDate: LocalDate?,
+)
+
+class UpdateExpirationUseCase(
+    private val repository: InventoryRepository,
+) : UseCase<UpdateExpirationParams, Unit> {
+    override suspend fun invoke(params: UpdateExpirationParams) {
+        repository.setExpirationDate(params.itemId, params.expirationDate)
+    }
+}
+
 private fun AddFoodItemParams.toFoodItem(): FoodItem {
     val now = Clock.System.now()
     return FoodItem(

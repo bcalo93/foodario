@@ -41,3 +41,6 @@ UPDATE food_item SET is_frozen = :isFrozen, updated_at = :updatedAt WHERE id = :
 
 delete:
 DELETE FROM food_item WHERE id = :id;
+
+updateExpiration:
+UPDATE food_item SET expiration_date = :expirationDate, updated_at = :updatedAt WHERE id = :id;
