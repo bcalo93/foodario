@@ -32,21 +32,18 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.foodario.core.domain.usecase.ObserveUseCase
 import com.foodario.core.domain.usecase.UseCase
 import com.foodario.core.presentation.components.HandDrawnCheckbox
 import com.foodario.core.presentation.components.emoji
 import com.foodario.core.presentation.components.formatQuantity
 import com.foodario.core.presentation.components.notebookMargin
+import com.foodario.core.presentation.preview.previewObserveUseCase
 import com.foodario.core.presentation.theme.FoodarioTheme
 import com.foodario.inventory.domain.model.FoodCategory
 import com.foodario.inventory.domain.model.FoodItem
 import com.foodario.inventory.domain.model.QuantityUnit
 import com.foodario.shoppinglist.domain.model.ShoppingItem
 import com.foodario.shoppinglist.domain.usecase.MoveToInventoryParams
-import com.foodario.shoppinglist.domain.usecase.ObserveShoppingListParams
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
 import kotlin.time.Instant
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -248,17 +245,12 @@ fun Modifier.markerStrikeThrough(visible: Boolean): Modifier {
     }
 }
 
-private fun fakeObserveShoppingListUseCase(): ObserveUseCase<ObserveShoppingListParams, List<ShoppingItem>> =
-    object : ObserveUseCase<ObserveShoppingListParams, List<ShoppingItem>> {
-        override fun invoke(params: ObserveShoppingListParams): Flow<List<ShoppingItem>> =
-            flowOf(
-                listOf(
-                    sampleShoppingItem(1L, "Leche", FoodCategory.DAIRY, 2.0, QuantityUnit.UNIT),
-                    sampleShoppingItem(2L, "Pechuga", FoodCategory.MEAT, 300.0, QuantityUnit.GRAMS),
-                    sampleShoppingItem(3L, "Manzanas", FoodCategory.FRUITS, 1.0, QuantityUnit.KILOGRAMS),
-                )
-            )
-    }
+private fun sampleShoppingList(): List<ShoppingItem> =
+    listOf(
+        sampleShoppingItem(1L, "Leche", FoodCategory.DAIRY, 2.0, QuantityUnit.UNIT),
+        sampleShoppingItem(2L, "Pechuga", FoodCategory.MEAT, 300.0, QuantityUnit.GRAMS),
+        sampleShoppingItem(3L, "Manzanas", FoodCategory.FRUITS, 1.0, QuantityUnit.KILOGRAMS),
+    )
 
 private fun sampleShoppingItem(
     id: Long,
@@ -297,7 +289,7 @@ private fun ShoppingListScreenLightPreview() {
     FoodarioTheme(darkTheme = false) {
         ShoppingListScreen(
             viewModel = ShoppingListViewModel(
-                observeShoppingList = fakeObserveShoppingListUseCase(),
+                observeShoppingList = previewObserveUseCase(sampleShoppingList()),
                 moveToInventory = fakeMoveToInventoryUseCase(),
             ),
         )
@@ -310,7 +302,7 @@ private fun ShoppingListScreenDarkPreview() {
     FoodarioTheme(darkTheme = true) {
         ShoppingListScreen(
             viewModel = ShoppingListViewModel(
-                observeShoppingList = fakeObserveShoppingListUseCase(),
+                observeShoppingList = previewObserveUseCase(sampleShoppingList()),
                 moveToInventory = fakeMoveToInventoryUseCase(),
             ),
         )
