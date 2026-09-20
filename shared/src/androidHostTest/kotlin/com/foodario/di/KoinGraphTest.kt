@@ -100,33 +100,30 @@ class KoinGraphTest {
             )
         }
 
-        try {
-            val koin = application.koin
-            assertIs<ObserveInventoryUseCase>(
-                koin.get<ObserveUseCase<ObserveInventoryParams, List<FoodItem>>>(named("observeInventory")),
-            )
-            assertIs<ObserveFoodItemUseCase>(
-                koin.get<ObserveUseCase<ObserveFoodItemParams, FoodItem?>>(named("observeFoodItem")),
-            )
-            assertIs<ObserveShoppingListUseCase>(
-                koin.get<ObserveUseCase<ObserveShoppingListParams, List<ShoppingItem>>>(named("observeShoppingList")),
-            )
+        val koin = application.koin
+        assertIs<ObserveInventoryUseCase>(
+            koin.get<ObserveUseCase<ObserveInventoryParams, List<FoodItem>>>(named("observeInventory")),
+        )
+        assertIs<ObserveFoodItemUseCase>(
+            koin.get<ObserveUseCase<ObserveFoodItemParams, FoodItem?>>(named("observeFoodItem")),
+        )
+        assertIs<ObserveShoppingListUseCase>(
+            koin.get<ObserveUseCase<ObserveShoppingListParams, List<ShoppingItem>>>(named("observeShoppingList")),
+        )
 
-            val inventoryState = koin.get<InventoryViewModel>().uiState.first { !it.isLoading }
-            val shoppingState = koin.get<ShoppingListViewModel>().uiState.first { !it.isLoading }
-            val detailState = koin
-                .get<FoodDetailViewModel> { parametersOf(1L) }
-                .uiState
-                .first { !it.isLoading }
+        val inventoryState = koin.get<InventoryViewModel>().uiState.first { !it.isLoading }
+        val shoppingState = koin.get<ShoppingListViewModel>().uiState.first { !it.isLoading }
+        val detailState = koin
+            .get<FoodDetailViewModel> { parametersOf(1L) }
+            .uiState
+            .first { !it.isLoading }
+        application.close()
 
-            assertEquals(listOf(foodItem), inventoryState.items)
-            assertEquals(null, inventoryState.error)
-            assertEquals(listOf(shoppingItem), shoppingState.items)
-            assertEquals(null, shoppingState.error)
-            assertEquals(foodItem, detailState.item)
-            assertEquals(null, detailState.error)
-        } finally {
-            application.close()
-        }
+        assertEquals(listOf(foodItem), inventoryState.items)
+        assertEquals(null, inventoryState.error)
+        assertEquals(listOf(shoppingItem), shoppingState.items)
+        assertEquals(null, shoppingState.error)
+        assertEquals(foodItem, detailState.item)
+        assertEquals(null, detailState.error)
     }
 }

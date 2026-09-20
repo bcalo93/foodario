@@ -41,12 +41,12 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.material3.rememberDatePickerState
 import com.foodario.core.domain.usecase.ObserveUseCase
-import com.foodario.core.domain.usecase.UseCase
 import com.foodario.core.presentation.components.DoodleDivider
 import com.foodario.core.presentation.components.HandDrawnCheckbox
 import com.foodario.core.presentation.components.QuantityStepper
 import com.foodario.core.presentation.components.emoji
 import com.foodario.core.presentation.components.notebookMargin
+import com.foodario.core.presentation.preview.previewUnitUseCase
 import com.foodario.core.presentation.theme.FoodarioTheme
 import com.foodario.core.presentation.theme.categoryColor
 import com.foodario.inventory.domain.model.FoodCategory
@@ -649,11 +649,6 @@ internal fun formatDate(date: LocalDate): String =
 
 private const val MILLIS_PER_DAY = 86_400_000L
 
-private fun <P> unitUseCase(): UseCase<P, Unit> =
-    object : UseCase<P, Unit> {
-        override suspend fun invoke(params: P) {}
-    }
-
 private fun fakeObserveFoodItemUseCase(item: FoodItem): ObserveUseCase<ObserveFoodItemParams, FoodItem?> =
     object : ObserveUseCase<ObserveFoodItemParams, FoodItem?> {
         override fun invoke(params: ObserveFoodItemParams): Flow<FoodItem?> = flowOf(item)
@@ -680,14 +675,14 @@ private fun FoodDetailScreenLightPreview() {
             viewModel = FoodDetailViewModel(
                 itemId = 1L,
                 observeFoodItem = fakeObserveFoodItemUseCase(sampleItem()),
-                updateQuantity = unitUseCase(),
-                updateCategory = unitUseCase(),
-                updateUnit = unitUseCase(),
-                consumeFoodItem = unitUseCase(),
-                toggleFrozen = unitUseCase(),
-                updateExpiration = unitUseCase(),
-                deleteFoodItem = unitUseCase(),
-                addToShoppingList = unitUseCase(),
+                updateQuantity = previewUnitUseCase(),
+                updateCategory = previewUnitUseCase(),
+                updateUnit = previewUnitUseCase(),
+                consumeFoodItem = previewUnitUseCase(),
+                toggleFrozen = previewUnitUseCase(),
+                updateExpiration = previewUnitUseCase(),
+                deleteFoodItem = previewUnitUseCase(),
+                addToShoppingList = previewUnitUseCase(),
             ),
         )
     }
@@ -702,14 +697,14 @@ private fun FoodDetailScreenDarkPreview() {
             viewModel = FoodDetailViewModel(
                 itemId = 1L,
                 observeFoodItem = fakeObserveFoodItemUseCase(sampleItem()),
-                updateQuantity = unitUseCase(),
-                updateCategory = unitUseCase(),
-                updateUnit = unitUseCase(),
-                consumeFoodItem = unitUseCase(),
-                toggleFrozen = unitUseCase(),
-                updateExpiration = unitUseCase(),
-                deleteFoodItem = unitUseCase(),
-                addToShoppingList = unitUseCase(),
+                updateQuantity = previewUnitUseCase(),
+                updateCategory = previewUnitUseCase(),
+                updateUnit = previewUnitUseCase(),
+                consumeFoodItem = previewUnitUseCase(),
+                toggleFrozen = previewUnitUseCase(),
+                updateExpiration = previewUnitUseCase(),
+                deleteFoodItem = previewUnitUseCase(),
+                addToShoppingList = previewUnitUseCase(),
             ),
         )
     }

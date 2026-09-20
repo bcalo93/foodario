@@ -54,6 +54,7 @@ import com.foodario.core.presentation.components.NotebookListItem
 import com.foodario.core.presentation.components.QuickAddBar
 import com.foodario.core.presentation.components.emoji
 import com.foodario.core.presentation.components.notebookMargin
+import com.foodario.core.presentation.preview.previewUnitUseCase
 import com.foodario.core.presentation.theme.FoodarioTheme
 import com.foodario.core.presentation.theme.categoryColor
 import com.foodario.inventory.domain.model.FoodCategory
@@ -425,11 +426,6 @@ private fun fakeAddFoodItemUseCase(): UseCase<AddFoodItemParams, FoodItem> =
             )
     }
 
-private fun <P> fakeUnitUseCase(): UseCase<P, Unit> =
-    object : UseCase<P, Unit> {
-        override suspend fun invoke(params: P) = Unit
-    }
-
 @Preview
 @Composable
 private fun InventoryScreenLightPreview() {
@@ -438,8 +434,8 @@ private fun InventoryScreenLightPreview() {
             viewModel = InventoryViewModel(
                 observeInventory = fakeObserveInventoryUseCase(),
                 addFoodItem = fakeAddFoodItemUseCase(),
-                updateQuantity = fakeUnitUseCase(),
-                deleteFoodItem = fakeUnitUseCase(),
+                updateQuantity = previewUnitUseCase(),
+                deleteFoodItem = previewUnitUseCase(),
             )
         )
     }
@@ -453,8 +449,8 @@ private fun InventoryScreenDarkPreview() {
             viewModel = InventoryViewModel(
                 observeInventory = fakeObserveInventoryUseCase(),
                 addFoodItem = fakeAddFoodItemUseCase(),
-                updateQuantity = fakeUnitUseCase(),
-                deleteFoodItem = fakeUnitUseCase(),
+                updateQuantity = previewUnitUseCase(),
+                deleteFoodItem = previewUnitUseCase(),
             )
         )
     }
