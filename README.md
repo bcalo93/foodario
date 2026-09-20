@@ -28,4 +28,14 @@ Use the run button in your IDE's editor gutter, or run tests using Gradle tasks:
 
 ---
 
+## 📦 Release
+
+See [`docs/release.md`](./docs/release.md) for the full release guide, including:
+
+- How to generate and configure the release keystore.
+- How to release from GitHub (tag push or web UI).
+- How to build, install, and test the signed APK on a local emulator or device.
+
+---
+
 Learn more about [Kotlin Multiplatform](https://www.jetbrains.com/help/kotlin-multiplatform-dev/get-started.html)…
