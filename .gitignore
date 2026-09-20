@@ -18,5 +18,8 @@ captures
 **/xcshareddata/WorkspaceSettings.xcsettings
 node_modules/
 
-## Temporal, delete later
-docs/
+# Release signing
+*.jks
+*.keystore
+keystore.properties
+*.jks.b64
