@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -29,6 +30,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.foodario.core.presentation.components.DoodleDivider
+import com.foodario.core.presentation.components.FridgeIllustration
 import com.foodario.core.presentation.theme.FoodarioTheme
 import com.foodario.inventory.presentation.FoodDetailScreen
 import com.foodario.inventory.presentation.InventoryScreen
@@ -78,7 +80,10 @@ fun FoodarioNavHost(navController: NavHostController = rememberNavController()) 
             }
             composable<FoodDetailRoute> { entry ->
                 val route = entry.toRoute<FoodDetailRoute>()
-                FoodDetailScreen(itemId = route.itemId)
+                FoodDetailScreen(
+                    itemId = route.itemId,
+                    onDeleted = { navController.popBackStack() },
+                )
             }
         }
     }
@@ -113,14 +118,19 @@ private fun FoodarioBottomBar(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             BottomBarItem(
-                emoji = "🧊",
+                icon = {
+                    FridgeIllustration(
+                        modifier = Modifier.size(28.dp),
+                        contentDescription = "Heladera",
+                    )
+                },
                 label = "Heladera",
                 selected = selected?.hasRoute<InventoryRoute>() == true,
                 onClick = onInventoryClick,
                 modifier = Modifier.weight(1f),
             )
             BottomBarItem(
-                emoji = "🛒",
+                icon = { Text(text = "🛒", fontSize = 24.sp) },
                 label = "Compras",
                 selected = selected?.hasRoute<ShoppingListRoute>() == true,
                 onClick = onShoppingListClick,
@@ -132,7 +142,7 @@ private fun FoodarioBottomBar(
 
 @Composable
 private fun BottomBarItem(
-    emoji: String,
+    icon: @Composable () -> Unit,
     label: String,
     selected: Boolean,
     onClick: () -> Unit,
@@ -149,7 +159,7 @@ private fun BottomBarItem(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        Text(text = emoji, fontSize = 24.sp)
+        icon()
         Spacer(Modifier.height(2.dp))
         Text(text = label, style = typography.labelHand, color = tint)
     }

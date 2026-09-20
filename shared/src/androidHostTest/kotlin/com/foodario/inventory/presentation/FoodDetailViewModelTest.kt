@@ -11,8 +11,10 @@ import com.foodario.inventory.domain.usecase.ConsumeFoodItemParams
 import com.foodario.inventory.domain.usecase.DeleteFoodItemParams
 import com.foodario.inventory.domain.usecase.ObserveFoodItemParams
 import com.foodario.inventory.domain.usecase.ToggleFrozenParams
+import com.foodario.inventory.domain.usecase.UpdateCategoryParams
 import com.foodario.inventory.domain.usecase.UpdateExpirationParams
 import com.foodario.inventory.domain.usecase.UpdateQuantityParams
+import com.foodario.inventory.domain.usecase.UpdateUnitParams
 import com.foodario.shoppinglist.domain.usecase.AddToShoppingListParams
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -39,6 +41,8 @@ class FoodDetailViewModelTest {
 
     private val observeFoodItem = mockk<ObserveUseCase<ObserveFoodItemParams, FoodItem?>>()
     private val updateQuantity = mockk<UseCase<UpdateQuantityParams, Unit>>()
+    private val updateCategory = mockk<UseCase<UpdateCategoryParams, Unit>>()
+    private val updateUnit = mockk<UseCase<UpdateUnitParams, Unit>>()
     private val consumeFoodItem = mockk<UseCase<ConsumeFoodItemParams, Unit>>()
     private val toggleFrozen = mockk<UseCase<ToggleFrozenParams, Unit>>()
     private val updateExpiration = mockk<UseCase<UpdateExpirationParams, Unit>>()
@@ -71,6 +75,8 @@ class FoodDetailViewModelTest {
         itemId = itemId,
         observeFoodItem = observeFoodItem,
         updateQuantity = updateQuantity,
+        updateCategory = updateCategory,
+        updateUnit = updateUnit,
         consumeFoodItem = consumeFoodItem,
         toggleFrozen = toggleFrozen,
         updateExpiration = updateExpiration,
@@ -137,6 +143,23 @@ class FoodDetailViewModelTest {
     }
 
     @Test
+    fun `consume at zero emits quantity depleted effect`() = runTest {
+        every { observeFoodItem(ObserveFoodItemParams(itemId)) } returns flowOf(leche.copy(quantity = 1.0))
+        coEvery { consumeFoodItem(any()) } returns Unit
+        val viewModel = viewModel()
+
+        viewModel.uiState.test {
+            awaitLoaded()
+            viewModel.effects.test {
+                viewModel.onEvent(FoodDetailEvent.Consume)
+                assertEquals(FoodDetailEffect.QuantityDepleted, awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
     fun `toggle frozen calls toggle use case`() = runTest {
         every { observeFoodItem(ObserveFoodItemParams(itemId)) } returns flowOf(leche)
         coEvery { toggleFrozen(any()) } returns Unit
@@ -149,6 +172,36 @@ class FoodDetailViewModelTest {
         }
 
         coVerify { toggleFrozen(ToggleFrozenParams(itemId)) }
+    }
+
+    @Test
+    fun `category changed calls update category use case`() = runTest {
+        every { observeFoodItem(ObserveFoodItemParams(itemId)) } returns flowOf(leche)
+        coEvery { updateCategory(any()) } returns Unit
+        val viewModel = viewModel()
+
+        viewModel.uiState.test {
+            awaitLoaded()
+            viewModel.onEvent(FoodDetailEvent.CategoryChanged(FoodCategory.FRUITS))
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        coVerify { updateCategory(UpdateCategoryParams(itemId, FoodCategory.FRUITS)) }
+    }
+
+    @Test
+    fun `unit changed calls update unit use case`() = runTest {
+        every { observeFoodItem(ObserveFoodItemParams(itemId)) } returns flowOf(leche)
+        coEvery { updateUnit(any()) } returns Unit
+        val viewModel = viewModel()
+
+        viewModel.uiState.test {
+            awaitLoaded()
+            viewModel.onEvent(FoodDetailEvent.UnitChanged(QuantityUnit.GRAMS))
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        coVerify { updateUnit(UpdateUnitParams(itemId, QuantityUnit.GRAMS)) }
     }
 
     @Test
@@ -175,7 +228,11 @@ class FoodDetailViewModelTest {
 
         viewModel.uiState.test {
             awaitLoaded()
-            viewModel.onEvent(FoodDetailEvent.Delete)
+            viewModel.effects.test {
+                viewModel.onEvent(FoodDetailEvent.Delete)
+                assertEquals(FoodDetailEffect.Deleted, awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
             cancelAndIgnoreRemainingEvents()
         }
 
@@ -190,7 +247,11 @@ class FoodDetailViewModelTest {
 
         viewModel.uiState.test {
             awaitLoaded()
-            viewModel.onEvent(FoodDetailEvent.AddToShoppingList)
+            viewModel.effects.test {
+                viewModel.onEvent(FoodDetailEvent.AddToShoppingList)
+                assertEquals(FoodDetailEffect.AddedToShoppingList, awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
             cancelAndIgnoreRemainingEvents()
         }
 

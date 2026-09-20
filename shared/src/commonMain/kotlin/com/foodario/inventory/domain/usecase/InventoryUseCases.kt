@@ -41,6 +41,32 @@ class UpdateQuantityUseCase(
     }
 }
 
+data class UpdateCategoryParams(
+    val itemId: Long,
+    val category: FoodCategory,
+)
+
+class UpdateCategoryUseCase(
+    private val repository: InventoryRepository,
+) : UseCase<UpdateCategoryParams, Unit> {
+    override suspend fun invoke(params: UpdateCategoryParams) {
+        repository.setCategory(params.itemId, params.category)
+    }
+}
+
+data class UpdateUnitParams(
+    val itemId: Long,
+    val unit: QuantityUnit,
+)
+
+class UpdateUnitUseCase(
+    private val repository: InventoryRepository,
+) : UseCase<UpdateUnitParams, Unit> {
+    override suspend fun invoke(params: UpdateUnitParams) {
+        repository.setUnit(params.itemId, params.unit)
+    }
+}
+
 data class ConsumeFoodItemParams(
     val itemId: Long,
     val amount: Double = 1.0,

@@ -173,7 +173,7 @@ private fun ShoppingListRow(
                     Text(text = category.emoji, fontSize = 16.sp)
                     Spacer(Modifier.width(4.dp))
                     Text(
-                        text = category.name,
+                        text = category.displayName,
                         style = typography.label,
                         color = colors.inkSoft,
                     )
@@ -197,18 +197,28 @@ private fun ShoppingListRow(
 private fun MoveToInventoryButton(onClick: () -> Unit) {
     val colors = FoodarioTheme.colors
     val shape = RoundedCornerShape(8.dp)
-    Text(
-        text = "→ heladera",
-        style = FoodarioTheme.typography.label,
-        color = colors.penBlue,
+    Row(
         modifier = Modifier
             .clip(shape)
             .background(colors.paperElevated)
             .border(1.dp, colors.penBlue.copy(alpha = 0.5f), shape)
             .defaultMinSize(minHeight = 40.dp)
             .clickable(onClick = onClick)
-            .padding(horizontal = 10.dp, vertical = 8.dp),
-    )
+            .padding(horizontal = 8.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = "heladera",
+            style = FoodarioTheme.typography.caption,
+            color = colors.penBlue,
+        )
+        Spacer(Modifier.width(6.dp))
+        Text(
+            text = "+",
+            style = FoodarioTheme.typography.label,
+            color = colors.penBlue,
+        )
+    }
 }
 
 @Composable

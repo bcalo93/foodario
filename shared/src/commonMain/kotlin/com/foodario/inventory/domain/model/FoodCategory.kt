@@ -1,13 +1,15 @@
 package com.foodario.inventory.domain.model
 
-enum class FoodCategory {
-    DAIRY,
-    MEAT,
-    VEGETABLES,
-    FRUITS,
-    PANTRY,
-    FROZEN,
-    BEVERAGES,
-    COOKED,
-    OTHER,
+enum class FoodCategory(
+    val displayName: String,
+) {
+    DAIRY("Lácteos"),
+    MEAT("Carnes"),
+    VEGETABLES("Verduras"),
+    FRUITS("Frutas"),
+    PANTRY("Almacén"),
+    FROZEN("Congelados"),
+    BEVERAGES("Bebidas"),
+    COOKED("Cocinados"),
+    OTHER("Otros"),
 }

@@ -52,6 +52,16 @@ class InventoryRepositoryImplTest {
     }
 
     @Test
+    fun `findByName returns the first matching item`() = runTest {
+        val repository = inMemoryRepository()
+        repository.add(foodItem("Leche", quantity = 2.0))
+
+        val result = repository.findByName("Leche")
+
+        assertEquals(2.0, result?.quantity)
+    }
+
+    @Test
     fun `observeInventory filters by category`() = runTest {
         val repository = inMemoryRepository()
         repository.add(foodItem("Leche", FoodCategory.DAIRY))
@@ -81,6 +91,26 @@ class InventoryRepositoryImplTest {
         repository.updateQuantity(added.id, 5.0)
 
         assertEquals(5.0, repository.getById(added.id)?.quantity)
+    }
+
+    @Test
+    fun `setCategory updates category`() = runTest {
+        val repository = inMemoryRepository()
+        val added = repository.add(foodItem("Leche"))
+
+        repository.setCategory(added.id, FoodCategory.FRUITS)
+
+        assertEquals(FoodCategory.FRUITS, repository.getById(added.id)?.category)
+    }
+
+    @Test
+    fun `setUnit updates unit`() = runTest {
+        val repository = inMemoryRepository()
+        val added = repository.add(foodItem("Leche"))
+
+        repository.setUnit(added.id, QuantityUnit.GRAMS)
+
+        assertEquals(QuantityUnit.GRAMS, repository.getById(added.id)?.unit)
     }
 
     @Test

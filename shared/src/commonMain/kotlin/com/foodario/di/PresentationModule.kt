@@ -12,6 +12,8 @@ val presentationModule = module {
         InventoryViewModel(
             observeInventory = get(named("observeInventory")),
             addFoodItem = get(named("addFoodItem")),
+            updateQuantity = get(named("updateQuantity")),
+            deleteFoodItem = get(named("deleteFoodItem")),
         )
     }
     viewModel { params ->
@@ -19,6 +21,8 @@ val presentationModule = module {
             itemId = params.get(),
             observeFoodItem = get(named("observeFoodItem")),
             updateQuantity = get(named("updateQuantity")),
+            updateCategory = get(named("updateCategory")),
+            updateUnit = get(named("updateUnit")),
             consumeFoodItem = get(named("consumeFoodItem")),
             toggleFrozen = get(named("toggleFrozen")),
             updateExpiration = get(named("updateExpiration")),

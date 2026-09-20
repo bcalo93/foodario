@@ -179,7 +179,7 @@ private fun CategoryChip(
                 shape = shape,
             )
             .clickable(onClick = onClick)
-            .semantics { contentDescription = category.name },
+            .semantics { contentDescription = category.displayName },
     ) {
         Text(text = category.emoji, fontSize = 20.sp)
     }

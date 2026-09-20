@@ -58,20 +58,28 @@ class MoveToInventoryUseCase(
         val shoppingItem = requireNotNull(shoppingListRepository.getById(params.shoppingItemId)) {
             "El ítem de la lista de compras no existe"
         }
+        val quantityToAdd = shoppingItem.quantity ?: 1.0
         val now = Clock.System.now()
-        val foodItem = inventoryRepository.add(
-            FoodItem(
-                id = 0L,
-                name = shoppingItem.name,
-                category = shoppingItem.category ?: FoodCategory.OTHER,
-                quantity = shoppingItem.quantity ?: 1.0,
-                unit = shoppingItem.unit ?: QuantityUnit.UNIT,
-                isFrozen = false,
-                expirationDate = null,
-                createdAt = now,
-                updatedAt = now,
+        val existingItem = inventoryRepository.findByName(shoppingItem.name)
+        val foodItem = if (existingItem == null) {
+            inventoryRepository.add(
+                FoodItem(
+                    id = 0L,
+                    name = shoppingItem.name,
+                    category = shoppingItem.category ?: FoodCategory.OTHER,
+                    quantity = quantityToAdd,
+                    unit = shoppingItem.unit ?: QuantityUnit.UNIT,
+                    isFrozen = false,
+                    expirationDate = null,
+                    createdAt = now,
+                    updatedAt = now,
+                )
             )
-        )
+        } else {
+            val newQuantity = existingItem.quantity + quantityToAdd
+            inventoryRepository.updateQuantity(existingItem.id, newQuantity)
+            existingItem.copy(quantity = newQuantity, updatedAt = now)
+        }
         shoppingListRepository.remove(params.shoppingItemId)
         return foodItem
     }
