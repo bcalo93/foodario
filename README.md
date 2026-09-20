@@ -30,7 +30,7 @@ Use the run button in your IDE's editor gutter, or run tests using Gradle tasks:
 
 ## 📦 Release
 
-See [`docs/release.md`](./docs/release.md) for the full release guide, including:
+See [`docs/RELEASE.md`](./docs/RELEASE.md) for the full release guide, including:
 
 - How to generate and configure the release keystore.
 - How to release from GitHub (tag push or web UI).

@@ -48,21 +48,96 @@ Release APKs are signed with a personal keystore, never committed to the repo.
 
 ### CI builds
 
-The following GitHub Actions secrets must be set on the repository:
+The release workflow (`.github/workflows/release.yml`) reads four **repository secrets**. These are not committed to the repo; they are configured in the GitHub web interface and injected into the workflow at runtime.
 
-- `KEYSTORE_BASE64` — encode your keystore with:
+#### Required secrets
 
-  ```bash
-  base64 < foodario-release.jks | pbcopy
-  ```
+| Secret | Description | Example value |
+|--------|-------------|---------------|
+| `KEYSTORE_BASE64` | Base64-encoded content of your `foodario-release.jks` file. | `UEsDBBQACAAI...` (long string) |
+| `KEYSTORE_PASSWORD` | The password used to open the keystore (`-storepass`). | `<STORE_PASSWORD>` |
+| `KEY_ALIAS` | The alias you chose when generating the key (`-alias`). | `foodario` |
+| `KEY_PASSWORD` | The password for the key entry (`-keypass`). | `<KEY_PASSWORD>` |
 
-  (or `base64 foodario-release.jks` and copy the output).
+#### How to generate `KEYSTORE_BASE64`
 
-- `KEYSTORE_PASSWORD`
-- `KEY_ALIAS`
-- `KEY_PASSWORD`
+From the repo root, run:
 
-> **Important:** never commit the `.jks` file, `keystore.properties`, or any password to the repository. Both `*.jks` and `keystore.properties` are already ignored in `.gitignore`.
+```bash
+base64 < foodario-release.jks | pbcopy
+```
+
+> **Note for macOS:** use `base64 < foodario-release.jks` instead of `base64 foodario-release.jks`. The BSD version of `base64` on macOS does not always accept the file as a positional argument.
+
+If you do not have `pbcopy`, run:
+
+```bash
+base64 < foodario-release.jks
+```
+
+and copy the entire output.
+
+#### How to add the secrets in GitHub
+
+1. Open the repository on GitHub.
+2. Go to **Settings** → **Secrets and variables** → **Actions**.
+3. Click **New repository secret**.
+4. Add each secret one by one:
+   - Name: `KEYSTORE_BASE64` → Value: the base64 string from the previous step.
+   - Name: `KEYSTORE_PASSWORD` → Value: your keystore password.
+   - Name: `KEY_ALIAS` → Value: your key alias.
+   - Name: `KEY_PASSWORD` → Value: your key password.
+5. Make sure the names match exactly; the workflow references them as `secrets.KEYSTORE_BASE64`, `secrets.KEYSTORE_PASSWORD`, `secrets.KEY_ALIAS`, and `secrets.KEY_PASSWORD`.
+
+#### How to add the secrets with GitHub CLI
+
+You can also use the [`gh`](https://cli.github.com/) command-line tool. Make sure you are authenticated (`gh auth status`) and inside the repository directory.
+
+##### Generate the base64 keystore file
+
+```bash
+base64 < foodario-release.jks > foodario-release.jks.b64
+```
+
+##### Set the secrets
+
+```bash
+gh secret set KEYSTORE_BASE64 --body-file foodario-release.jks.b64
+gh secret set KEYSTORE_PASSWORD --body "<STORE_PASSWORD>"
+gh secret set KEY_ALIAS --body "foodario"
+gh secret set KEY_PASSWORD --body "<KEY_PASSWORD>"
+```
+
+> **Tip:** to avoid leaving passwords in your shell history, omit `--body` and `gh` will prompt you interactively:
+>
+> ```bash
+> gh secret set KEYSTORE_PASSWORD
+> gh secret set KEY_PASSWORD
+> ```
+
+If you prefer not to create a temporary file for the base64 value, you can pipe it directly:
+
+```bash
+base64 < foodario-release.jks | gh secret set KEYSTORE_BASE64
+```
+
+##### Verify the secrets
+
+```bash
+gh secret list
+```
+
+You should see `KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, and `KEY_PASSWORD` in the list.
+
+##### Clean up the temporary file
+
+The `.b64` file is only needed while setting the secret. Delete it afterwards:
+
+```bash
+rm foodario-release.jks.b64
+```
+
+> **Important:** never commit the `.jks` file, `keystore.properties`, `.b64` temporary files, or any password to the repository. The keystore-related files are already ignored in `.gitignore`.
 
 ---
 

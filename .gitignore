@@ -22,3 +22,4 @@ node_modules/
 *.jks
 *.keystore
 keystore.properties
+*.jks.b64
