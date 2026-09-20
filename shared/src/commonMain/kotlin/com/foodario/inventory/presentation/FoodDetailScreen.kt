@@ -40,22 +40,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.material3.rememberDatePickerState
-import com.foodario.core.domain.usecase.ObserveUseCase
 import com.foodario.core.presentation.components.DoodleDivider
 import com.foodario.core.presentation.components.HandDrawnCheckbox
 import com.foodario.core.presentation.components.QuantityStepper
 import com.foodario.core.presentation.components.emoji
 import com.foodario.core.presentation.components.notebookMargin
+import com.foodario.core.presentation.preview.previewObserveUseCase
 import com.foodario.core.presentation.preview.previewUnitUseCase
 import com.foodario.core.presentation.theme.FoodarioTheme
 import com.foodario.core.presentation.theme.categoryColor
 import com.foodario.inventory.domain.model.FoodCategory
 import com.foodario.inventory.domain.model.FoodItem
 import com.foodario.inventory.domain.model.QuantityUnit
-import com.foodario.inventory.domain.usecase.ObserveFoodItemParams
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.number
@@ -649,11 +645,6 @@ internal fun formatDate(date: LocalDate): String =
 
 private const val MILLIS_PER_DAY = 86_400_000L
 
-private fun fakeObserveFoodItemUseCase(item: FoodItem): ObserveUseCase<ObserveFoodItemParams, FoodItem?> =
-    object : ObserveUseCase<ObserveFoodItemParams, FoodItem?> {
-        override fun invoke(params: ObserveFoodItemParams): Flow<FoodItem?> = flowOf(item)
-    }
-
 private fun sampleItem() = FoodItem(
     id = 1L,
     name = "Leche",
@@ -674,7 +665,7 @@ private fun FoodDetailScreenLightPreview() {
             itemId = 1L,
             viewModel = FoodDetailViewModel(
                 itemId = 1L,
-                observeFoodItem = fakeObserveFoodItemUseCase(sampleItem()),
+                observeFoodItem = previewObserveUseCase(sampleItem()),
                 updateQuantity = previewUnitUseCase(),
                 updateCategory = previewUnitUseCase(),
                 updateUnit = previewUnitUseCase(),
@@ -696,7 +687,7 @@ private fun FoodDetailScreenDarkPreview() {
             itemId = 1L,
             viewModel = FoodDetailViewModel(
                 itemId = 1L,
-                observeFoodItem = fakeObserveFoodItemUseCase(sampleItem()),
+                observeFoodItem = previewObserveUseCase(sampleItem()),
                 updateQuantity = previewUnitUseCase(),
                 updateCategory = previewUnitUseCase(),
                 updateUnit = previewUnitUseCase(),

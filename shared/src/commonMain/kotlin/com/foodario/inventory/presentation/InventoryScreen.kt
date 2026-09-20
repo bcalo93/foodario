@@ -46,7 +46,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.foodario.core.domain.usecase.ObserveUseCase
 import com.foodario.core.domain.usecase.UseCase
 import com.foodario.core.presentation.components.DoodleDivider
 import com.foodario.core.presentation.components.FridgeIllustration
@@ -54,6 +53,7 @@ import com.foodario.core.presentation.components.NotebookListItem
 import com.foodario.core.presentation.components.QuickAddBar
 import com.foodario.core.presentation.components.emoji
 import com.foodario.core.presentation.components.notebookMargin
+import com.foodario.core.presentation.preview.previewObserveUseCase
 import com.foodario.core.presentation.preview.previewUnitUseCase
 import com.foodario.core.presentation.theme.FoodarioTheme
 import com.foodario.core.presentation.theme.categoryColor
@@ -61,9 +61,6 @@ import com.foodario.inventory.domain.model.FoodCategory
 import com.foodario.inventory.domain.model.FoodItem
 import com.foodario.inventory.domain.model.QuantityUnit
 import com.foodario.inventory.domain.usecase.AddFoodItemParams
-import com.foodario.inventory.domain.usecase.ObserveInventoryParams
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
 import kotlin.time.Instant
 import kotlin.math.roundToInt
 import org.koin.compose.viewmodel.koinViewModel
@@ -382,17 +379,12 @@ private fun FilterChip(
     }
 }
 
-private fun fakeObserveInventoryUseCase(): ObserveUseCase<ObserveInventoryParams, List<FoodItem>> =
-    object : ObserveUseCase<ObserveInventoryParams, List<FoodItem>> {
-        override fun invoke(params: ObserveInventoryParams): Flow<List<FoodItem>> =
-            flowOf(
-                listOf(
-                    sampleItem(1L, "Leche", FoodCategory.DAIRY, 2.0, QuantityUnit.UNIT, isFrozen = false),
-                    sampleItem(2L, "Pechuga", FoodCategory.MEAT, 300.0, QuantityUnit.GRAMS, isFrozen = true),
-                    sampleItem(3L, "Manzanas", FoodCategory.FRUITS, 1.0, QuantityUnit.KILOGRAMS, isFrozen = false),
-                )
-            )
-    }
+private fun sampleInventory(): List<FoodItem> =
+    listOf(
+        sampleItem(1L, "Leche", FoodCategory.DAIRY, 2.0, QuantityUnit.UNIT, isFrozen = false),
+        sampleItem(2L, "Pechuga", FoodCategory.MEAT, 300.0, QuantityUnit.GRAMS, isFrozen = true),
+        sampleItem(3L, "Manzanas", FoodCategory.FRUITS, 1.0, QuantityUnit.KILOGRAMS, isFrozen = false),
+    )
 
 private fun sampleItem(
     id: Long,
@@ -432,7 +424,7 @@ private fun InventoryScreenLightPreview() {
     FoodarioTheme(darkTheme = false) {
         InventoryScreen(
             viewModel = InventoryViewModel(
-                observeInventory = fakeObserveInventoryUseCase(),
+                observeInventory = previewObserveUseCase(sampleInventory()),
                 addFoodItem = fakeAddFoodItemUseCase(),
                 updateQuantity = previewUnitUseCase(),
                 deleteFoodItem = previewUnitUseCase(),
@@ -447,7 +439,7 @@ private fun InventoryScreenDarkPreview() {
     FoodarioTheme(darkTheme = true) {
         InventoryScreen(
             viewModel = InventoryViewModel(
-                observeInventory = fakeObserveInventoryUseCase(),
+                observeInventory = previewObserveUseCase(sampleInventory()),
                 addFoodItem = fakeAddFoodItemUseCase(),
                 updateQuantity = previewUnitUseCase(),
                 deleteFoodItem = previewUnitUseCase(),
