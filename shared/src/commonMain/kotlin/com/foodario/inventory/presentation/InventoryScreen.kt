@@ -84,27 +84,27 @@ fun InventoryScreen(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp)
-                .padding(top = 16.dp),
+                .padding(horizontal = FoodarioTheme.dimensions.lg)
+                .padding(top = FoodarioTheme.dimensions.lg),
         ) {
             Text(
                 text = "Mi heladera",
                 style = typography.displayHand,
                 color = colors.ink,
             )
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(FoodarioTheme.dimensions.md))
             SearchField(
                 value = uiState.searchQuery,
                 onValueChange = { viewModel.onEvent(InventoryEvent.SearchQueryChanged(it)) },
             )
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(FoodarioTheme.dimensions.md))
             CategoryFilters(
                 selected = uiState.selectedCategory,
                 onSelect = { category -> viewModel.onEvent(InventoryEvent.CategorySelected(category)) },
             )
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(FoodarioTheme.dimensions.sm))
             DoodleDivider()
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(FoodarioTheme.dimensions.sm))
             QuickAddBar(
                 selectedCategory = quickAddCategory,
                 onCategorySelected = { viewModel.onEvent(InventoryEvent.QuickAddCategorySelected(it)) },
@@ -129,7 +129,7 @@ fun InventoryScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .notebookMargin()
-                        .padding(end = 16.dp),
+                        .padding(end = FoodarioTheme.dimensions.lg),
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
@@ -146,7 +146,7 @@ fun InventoryScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .notebookMargin()
-                        .padding(end = 16.dp),
+                        .padding(end = FoodarioTheme.dimensions.lg),
                     contentAlignment = Alignment.Center,
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -154,7 +154,7 @@ fun InventoryScreen(
                             modifier = Modifier.size(96.dp),
                             contentDescription = "Ilustración de una heladera",
                         )
-                        Spacer(Modifier.height(12.dp))
+                        Spacer(Modifier.height(FoodarioTheme.dimensions.md))
                         Text(
                             text = "Tu heladera está vacía… ¡empezá a anotar!",
                             style = typography.titleHand,
@@ -230,7 +230,7 @@ private fun SwipeableInventoryItem(
                         offsetX = 0f
                         if (isDeleteAction) onDelete() else onIncreaseQuantity()
                     }
-                    .padding(horizontal = 20.dp),
+                    .padding(horizontal = FoodarioTheme.dimensions.xl),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = if (offsetX < 0f) {
                     Arrangement.End
@@ -293,7 +293,7 @@ private fun SearchField(
         singleLine = true,
         modifier = Modifier
             .fillMaxWidth()
-            .defaultMinSize(minHeight = 48.dp)
+            .defaultMinSize(minHeight = FoodarioTheme.dimensions.touchTarget)
             .drawBehind {
                 val y = size.height - 2.dp.toPx()
                 drawLine(
@@ -307,7 +307,7 @@ private fun SearchField(
                     ),
                 )
             }
-            .padding(vertical = 12.dp),
+            .padding(vertical = FoodarioTheme.dimensions.md),
         textStyle = typography.body.copy(color = colors.ink),
         cursorBrush = SolidColor(colors.penBlue),
         decorationBox = { innerTextField ->
@@ -332,7 +332,7 @@ private fun CategoryFilters(
 ) {
     Row(
         modifier = Modifier.horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(FoodarioTheme.dimensions.sm),
     ) {
         FoodCategory.entries.forEach { category ->
             val isSelected = category == selected
@@ -358,7 +358,7 @@ private fun FilterChip(
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(FoodarioTheme.dimensions.xs),
         modifier = Modifier
             .clip(shape)
             .background(categoryColor(category))
@@ -368,7 +368,7 @@ private fun FilterChip(
                 shape = shape,
             )
             .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 6.dp),
+            .padding(horizontal = FoodarioTheme.dimensions.md, vertical = FoodarioTheme.dimensions.sm),
     ) {
         Text(text = category.emoji, fontSize = 16.sp)
         Text(

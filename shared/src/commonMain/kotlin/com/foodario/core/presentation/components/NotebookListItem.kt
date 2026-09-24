@@ -57,7 +57,7 @@ fun NotebookListItem(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .defaultMinSize(minHeight = 56.dp)
+            .defaultMinSize(minHeight = FoodarioTheme.dimensions.rowHeight)
             .clickable(onClick = onClick)
             .drawBehind {
                 drawLine(
@@ -67,7 +67,7 @@ fun NotebookListItem(
                     strokeWidth = 1.dp.toPx(),
                 )
             }
-            .padding(horizontal = 16.dp, vertical = 10.dp),
+            .padding(horizontal = FoodarioTheme.dimensions.lg, vertical = FoodarioTheme.dimensions.md),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
@@ -76,7 +76,7 @@ fun NotebookListItem(
         ) {
             Text(text = category.emoji, fontSize = 32.sp)
         }
-        Spacer(Modifier.width(12.dp))
+        Spacer(Modifier.width(FoodarioTheme.dimensions.md))
         Column(modifier = Modifier.weight(1f)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
@@ -87,7 +87,7 @@ fun NotebookListItem(
                     overflow = TextOverflow.Ellipsis,
                 )
                 if (isFrozen) {
-                    Spacer(Modifier.width(6.dp))
+                    Spacer(Modifier.width(FoodarioTheme.dimensions.sm))
                     Text(
                         text = "❄",
                         fontSize = 16.sp,
@@ -95,17 +95,17 @@ fun NotebookListItem(
                     )
                 }
             }
-            Spacer(Modifier.height(2.dp))
+            Spacer(Modifier.height(FoodarioTheme.dimensions.xxs))
             Text(
                 text = category.displayName,
                 style = typography.labelHand,
                 color = colors.ink,
                 modifier = Modifier
                     .background(categoryColor(category), RoundedCornerShape(4.dp))
-                    .padding(horizontal = 4.dp, vertical = 1.dp),
+                    .padding(horizontal = FoodarioTheme.dimensions.xs, vertical = FoodarioTheme.dimensions.xxs),
             )
             if (expiresInDays != null && expiresInDays <= 2) {
-                Spacer(Modifier.height(2.dp))
+                Spacer(Modifier.height(FoodarioTheme.dimensions.xxs))
                 Text(
                     text = "¡vence en $expiresInDays días!",
                     style = typography.labelHand,
@@ -113,7 +113,7 @@ fun NotebookListItem(
                 )
             }
         }
-        Spacer(Modifier.width(12.dp))
+        Spacer(Modifier.width(FoodarioTheme.dimensions.md))
         Text(
             text = formatQuantity(quantity, unit),
             style = typography.quantityHand,

@@ -88,7 +88,7 @@ private fun FridgeIllustrationLightPreview() {
             modifier = Modifier
                 .fillMaxSize()
                 .background(FoodarioTheme.colors.paper)
-                .padding(32.dp),
+                .padding(FoodarioTheme.dimensions.xxl),
         ) {
             FridgeIllustration(Modifier.size(120.dp))
         }
@@ -103,7 +103,7 @@ private fun FridgeIllustrationDarkPreview() {
             modifier = Modifier
                 .fillMaxSize()
                 .background(FoodarioTheme.colors.paper)
-                .padding(32.dp),
+                .padding(FoodarioTheme.dimensions.xxl),
         ) {
             FridgeIllustration(Modifier.size(120.dp))
         }

@@ -26,7 +26,7 @@ fun Modifier.notebookMargin(): Modifier {
                 strokeWidth = 1.dp.toPx(),
             )
         }
-        .padding(start = 48.dp)
+        .padding(start = FoodarioTheme.dimensions.xxl)
 }
 
 @Preview
@@ -38,7 +38,7 @@ private fun NotebookMarginLightPreview() {
                 .fillMaxSize()
                 .background(FoodarioTheme.colors.paper)
                 .notebookMargin()
-                .padding(end = 16.dp),
+                .padding(end = FoodarioTheme.dimensions.lg),
         ) {
             Text(
                 text = "Nota de ejemplo al margen",
@@ -58,7 +58,7 @@ private fun NotebookMarginDarkPreview() {
                 .fillMaxSize()
                 .background(FoodarioTheme.colors.paper)
                 .notebookMargin()
-                .padding(end = 16.dp),
+                .padding(end = FoodarioTheme.dimensions.lg),
         ) {
             Text(
                 text = "Nota de ejemplo al margen",

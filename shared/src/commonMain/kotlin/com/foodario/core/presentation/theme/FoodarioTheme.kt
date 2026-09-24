@@ -86,6 +86,8 @@ fun FoodarioTheme(
 }
 
 object FoodarioTheme {
+    val dimensions = FoodarioDimensions()
+
     val isDark: Boolean
         @Composable get() = LocalFoodarioColors.current == darkFoodarioColors
 

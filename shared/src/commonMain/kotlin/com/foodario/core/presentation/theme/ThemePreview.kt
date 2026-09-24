@@ -23,15 +23,15 @@ private fun ThemeSample() {
         modifier = Modifier
             .fillMaxSize()
             .background(FoodarioTheme.colors.paper)
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+            .padding(FoodarioTheme.dimensions.lg),
+        verticalArrangement = Arrangement.spacedBy(FoodarioTheme.dimensions.sm),
     ) {
         Text("Display Hand", style = FoodarioTheme.typography.displayHand, color = FoodarioTheme.colors.ink)
         Text("Title Hand", style = FoodarioTheme.typography.titleHand, color = FoodarioTheme.colors.penBlue)
         Text("Body text", style = FoodarioTheme.typography.body, color = FoodarioTheme.colors.inkSoft)
         Text("Caption text", style = FoodarioTheme.typography.caption, color = FoodarioTheme.colors.pencilGray)
 
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(FoodarioTheme.dimensions.sm)) {
             FoodCategory.entries.forEach { category ->
                 Box(
                     modifier = Modifier

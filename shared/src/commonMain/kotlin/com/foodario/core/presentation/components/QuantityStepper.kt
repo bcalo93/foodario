@@ -54,7 +54,7 @@ fun QuantityStepper(
     Row(
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        horizontalArrangement = Arrangement.spacedBy(FoodarioTheme.dimensions.lg),
     ) {
         StepperButton(
             symbol = "−",
@@ -71,7 +71,7 @@ fun QuantityStepper(
                 style = typography.quantityHand,
                 color = colors.ink,
                 modifier = Modifier
-                    .heightIn(min = 48.dp)
+                    .heightIn(min = FoodarioTheme.dimensions.touchTarget)
                     .clickable(onClick = onQuantityClick)
                     .semantics {
                         role = Role.Button
@@ -83,7 +83,7 @@ fun QuantityStepper(
                 style = typography.label,
                 color = colors.inkSoft,
                 modifier = Modifier
-                    .heightIn(min = 48.dp)
+                    .heightIn(min = FoodarioTheme.dimensions.touchTarget)
                     .clickable(onClick = onUnitClick)
                     .semantics {
                         role = Role.Button
@@ -128,7 +128,7 @@ private fun StepperButton(
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
-            .size(48.dp)
+            .size(FoodarioTheme.dimensions.touchTarget)
             .repeatPress(onClick)
             .semantics {
                 role = Role.Button
@@ -184,7 +184,7 @@ private fun QuantityStepperUnitLightPreview() {
             modifier = Modifier
                 .fillMaxSize()
                 .background(FoodarioTheme.colors.paper)
-                .padding(16.dp),
+                .padding(FoodarioTheme.dimensions.lg),
         ) {
             QuantityStepper(
                 quantity = 2.0,
@@ -206,7 +206,7 @@ private fun QuantityStepperUnitDarkPreview() {
             modifier = Modifier
                 .fillMaxSize()
                 .background(FoodarioTheme.colors.paper)
-                .padding(16.dp),
+                .padding(FoodarioTheme.dimensions.lg),
         ) {
             QuantityStepper(
                 quantity = 2.0,
@@ -228,7 +228,7 @@ private fun QuantityStepperGramsLightPreview() {
             modifier = Modifier
                 .fillMaxSize()
                 .background(FoodarioTheme.colors.paper)
-                .padding(16.dp),
+                .padding(FoodarioTheme.dimensions.lg),
         ) {
             QuantityStepper(
                 quantity = 300.0,
@@ -250,7 +250,7 @@ private fun QuantityStepperGramsDarkPreview() {
             modifier = Modifier
                 .fillMaxSize()
                 .background(FoodarioTheme.colors.paper)
-                .padding(16.dp),
+                .padding(FoodarioTheme.dimensions.lg),
         ) {
             QuantityStepper(
                 quantity = 300.0,

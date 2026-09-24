@@ -66,8 +66,8 @@ fun ShoppingListScreen(
             color = colors.ink,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp)
-                .padding(top = 16.dp),
+                .padding(horizontal = FoodarioTheme.dimensions.lg)
+                .padding(top = FoodarioTheme.dimensions.lg),
         )
 
         when {
@@ -87,7 +87,7 @@ fun ShoppingListScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .notebookMargin()
-                        .padding(end = 16.dp),
+                        .padding(end = FoodarioTheme.dimensions.lg),
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
@@ -104,12 +104,12 @@ fun ShoppingListScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .notebookMargin()
-                        .padding(end = 16.dp),
+                        .padding(end = FoodarioTheme.dimensions.lg),
                     contentAlignment = Alignment.Center,
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(text = "🛒", fontSize = 48.sp)
-                        Spacer(Modifier.height(12.dp))
+                        Spacer(Modifier.height(FoodarioTheme.dimensions.md))
                         Text(
                             text = "Nada para comprar. Tachá todo ✓",
                             style = typography.titleHand,
@@ -151,7 +151,7 @@ private fun ShoppingListRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(end = 16.dp, top = 8.dp, bottom = 8.dp),
+            .padding(end = FoodarioTheme.dimensions.lg, top = FoodarioTheme.dimensions.sm, bottom = FoodarioTheme.dimensions.sm),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         HandDrawnCheckbox(
@@ -168,7 +168,7 @@ private fun ShoppingListRow(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 item.category?.let { category ->
                     Text(text = category.emoji, fontSize = 16.sp)
-                    Spacer(Modifier.width(4.dp))
+                    Spacer(Modifier.width(FoodarioTheme.dimensions.xs))
                     Text(
                         text = category.displayName,
                         style = typography.label,
@@ -176,7 +176,7 @@ private fun ShoppingListRow(
                     )
                 }
                 if (item.quantity != null) {
-                    Spacer(Modifier.width(8.dp))
+                    Spacer(Modifier.width(FoodarioTheme.dimensions.sm))
                     Text(
                         text = formatQuantity(item.quantity, item.unit ?: QuantityUnit.UNIT),
                         style = typography.caption,
@@ -185,7 +185,7 @@ private fun ShoppingListRow(
                 }
             }
         }
-        Spacer(Modifier.width(8.dp))
+        Spacer(Modifier.width(FoodarioTheme.dimensions.sm))
         MoveToInventoryButton(onClick = { onEvent(ShoppingListEvent.MoveToInventory(item.id)) })
     }
 }
@@ -201,7 +201,7 @@ private fun MoveToInventoryButton(onClick: () -> Unit) {
             .border(1.dp, colors.penBlue.copy(alpha = 0.5f), shape)
             .defaultMinSize(minHeight = 40.dp)
             .clickable(onClick = onClick)
-            .padding(horizontal = 8.dp, vertical = 6.dp),
+            .padding(horizontal = FoodarioTheme.dimensions.sm, vertical = FoodarioTheme.dimensions.sm),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
@@ -209,7 +209,7 @@ private fun MoveToInventoryButton(onClick: () -> Unit) {
             style = FoodarioTheme.typography.caption,
             color = colors.penBlue,
         )
-        Spacer(Modifier.width(6.dp))
+        Spacer(Modifier.width(FoodarioTheme.dimensions.sm))
         Text(
             text = "+",
             style = FoodarioTheme.typography.label,
