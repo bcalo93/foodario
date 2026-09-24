@@ -7,7 +7,7 @@ import com.foodario.core.domain.usecase.UseCase
 import com.foodario.inventory.domain.model.FoodCategory
 import com.foodario.inventory.domain.model.FoodItem
 import com.foodario.inventory.domain.model.QuantityUnit
-import com.foodario.inventory.domain.usecase.ConsumeFoodItemParams
+import com.foodario.inventory.domain.model.snapToStep
 import com.foodario.inventory.domain.usecase.DeleteFoodItemParams
 import com.foodario.inventory.domain.usecase.ObserveFoodItemParams
 import com.foodario.inventory.domain.usecase.ToggleFrozenParams
@@ -30,7 +30,7 @@ import kotlinx.datetime.LocalDate
 sealed interface FoodDetailEvent {
     data object IncrementQuantity : FoodDetailEvent
     data object DecrementQuantity : FoodDetailEvent
-    data object Consume : FoodDetailEvent
+    data class QuantitySet(val quantity: Double) : FoodDetailEvent
     data object ToggleFrozen : FoodDetailEvent
     data class CategoryChanged(val category: FoodCategory) : FoodDetailEvent
     data class ExpirationDateChanged(val date: LocalDate?) : FoodDetailEvent
@@ -51,7 +51,6 @@ class FoodDetailViewModel(
     private val updateQuantity: UseCase<UpdateQuantityParams, Unit>,
     private val updateCategory: UseCase<UpdateCategoryParams, Unit>,
     private val updateUnit: UseCase<UpdateUnitParams, Unit>,
-    private val consumeFoodItem: UseCase<ConsumeFoodItemParams, Unit>,
     private val toggleFrozen: UseCase<ToggleFrozenParams, Unit>,
     private val updateExpiration: UseCase<UpdateExpirationParams, Unit>,
     private val deleteFoodItem: UseCase<DeleteFoodItemParams, Unit>,
@@ -75,16 +74,14 @@ class FoodDetailViewModel(
 
     fun onEvent(event: FoodDetailEvent) {
         when (event) {
-            is FoodDetailEvent.IncrementQuantity -> mutateQuantity { it + 1.0 }
-            is FoodDetailEvent.DecrementQuantity -> mutateQuantity { (it - 1.0).coerceAtLeast(0.0) }
-            is FoodDetailEvent.Consume -> {
-                val item = uiState.value.item ?: return
-                viewModelScope.launch {
-                    val result = runCatching { consumeFoodItem(ConsumeFoodItemParams(itemId)) }
-                    if (result.isSuccess && item.quantity <= 1.0) {
-                        effectChannel.send(FoodDetailEffect.QuantityDepleted)
-                    }
-                }
+            is FoodDetailEvent.IncrementQuantity -> mutateQuantity { current, unit ->
+                snapToStep(current + unit.step, unit.step)
+            }
+            is FoodDetailEvent.DecrementQuantity -> mutateQuantity { current, unit ->
+                snapToStep((current - unit.step).coerceAtLeast(0.0), unit.step)
+            }
+            is FoodDetailEvent.QuantitySet -> mutateQuantity { _, _ ->
+                event.quantity.coerceAtLeast(0.0)
             }
             is FoodDetailEvent.ToggleFrozen -> viewModelScope.launch {
                 runCatching { toggleFrozen(ToggleFrozenParams(itemId)) }
@@ -123,9 +120,9 @@ class FoodDetailViewModel(
         }
     }
 
-    private fun mutateQuantity(transform: (Double) -> Double) {
+    private fun mutateQuantity(transform: (quantity: Double, unit: QuantityUnit) -> Double) {
         val item = uiState.value.item ?: return
-        val newQuantity = transform(item.quantity)
+        val newQuantity = transform(item.quantity, item.unit).coerceAtLeast(0.0)
         viewModelScope.launch {
             val result = runCatching { updateQuantity(UpdateQuantityParams(itemId, newQuantity)) }
             if (result.isSuccess && newQuantity == 0.0) {

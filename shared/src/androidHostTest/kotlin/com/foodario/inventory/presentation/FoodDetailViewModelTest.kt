@@ -7,7 +7,6 @@ import com.foodario.core.domain.usecase.UseCase
 import com.foodario.inventory.domain.model.FoodCategory
 import com.foodario.inventory.domain.model.FoodItem
 import com.foodario.inventory.domain.model.QuantityUnit
-import com.foodario.inventory.domain.usecase.ConsumeFoodItemParams
 import com.foodario.inventory.domain.usecase.DeleteFoodItemParams
 import com.foodario.inventory.domain.usecase.ObserveFoodItemParams
 import com.foodario.inventory.domain.usecase.ToggleFrozenParams
@@ -43,7 +42,6 @@ class FoodDetailViewModelTest {
     private val updateQuantity = mockk<UseCase<UpdateQuantityParams, Unit>>()
     private val updateCategory = mockk<UseCase<UpdateCategoryParams, Unit>>()
     private val updateUnit = mockk<UseCase<UpdateUnitParams, Unit>>()
-    private val consumeFoodItem = mockk<UseCase<ConsumeFoodItemParams, Unit>>()
     private val toggleFrozen = mockk<UseCase<ToggleFrozenParams, Unit>>()
     private val updateExpiration = mockk<UseCase<UpdateExpirationParams, Unit>>()
     private val deleteFoodItem = mockk<UseCase<DeleteFoodItemParams, Unit>>()
@@ -77,7 +75,6 @@ class FoodDetailViewModelTest {
         updateQuantity = updateQuantity,
         updateCategory = updateCategory,
         updateUnit = updateUnit,
-        consumeFoodItem = consumeFoodItem,
         toggleFrozen = toggleFrozen,
         updateExpiration = updateExpiration,
         deleteFoodItem = deleteFoodItem,
@@ -120,7 +117,11 @@ class FoodDetailViewModelTest {
 
         viewModel.uiState.test {
             awaitLoaded()
-            viewModel.onEvent(FoodDetailEvent.DecrementQuantity)
+            viewModel.effects.test {
+                viewModel.onEvent(FoodDetailEvent.DecrementQuantity)
+                assertEquals(FoodDetailEffect.QuantityDepleted, awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
             cancelAndIgnoreRemainingEvents()
         }
 
@@ -128,35 +129,89 @@ class FoodDetailViewModelTest {
     }
 
     @Test
-    fun `consume calls consume use case`() = runTest {
-        every { observeFoodItem(ObserveFoodItemParams(itemId)) } returns flowOf(leche)
-        coEvery { consumeFoodItem(any()) } returns Unit
+    fun `increment with grams uses step 50`() = runTest {
+        val cheese = leche.copy(quantity = 300.0, unit = QuantityUnit.GRAMS)
+        every { observeFoodItem(ObserveFoodItemParams(itemId)) } returns flowOf(cheese)
+        coEvery { updateQuantity(any()) } returns Unit
         val viewModel = viewModel()
 
         viewModel.uiState.test {
             awaitLoaded()
-            viewModel.onEvent(FoodDetailEvent.Consume)
+            viewModel.onEvent(FoodDetailEvent.IncrementQuantity)
             cancelAndIgnoreRemainingEvents()
         }
 
-        coVerify { consumeFoodItem(ConsumeFoodItemParams(itemId)) }
+        coVerify { updateQuantity(UpdateQuantityParams(itemId, 350.0)) }
     }
 
     @Test
-    fun `consume at zero emits quantity depleted effect`() = runTest {
-        every { observeFoodItem(ObserveFoodItemParams(itemId)) } returns flowOf(leche.copy(quantity = 1.0))
-        coEvery { consumeFoodItem(any()) } returns Unit
+    fun `decrement with milliliters uses step 50 and clamps to zero`() = runTest {
+        val juice = leche.copy(quantity = 30.0, unit = QuantityUnit.MILLILITERS)
+        every { observeFoodItem(ObserveFoodItemParams(itemId)) } returns flowOf(juice)
+        coEvery { updateQuantity(any()) } returns Unit
         val viewModel = viewModel()
 
         viewModel.uiState.test {
             awaitLoaded()
             viewModel.effects.test {
-                viewModel.onEvent(FoodDetailEvent.Consume)
+                viewModel.onEvent(FoodDetailEvent.DecrementQuantity)
                 assertEquals(FoodDetailEffect.QuantityDepleted, awaitItem())
                 cancelAndIgnoreRemainingEvents()
             }
             cancelAndIgnoreRemainingEvents()
         }
+
+        coVerify { updateQuantity(UpdateQuantityParams(itemId, 0.0)) }
+    }
+
+    @Test
+    fun `increment with kilograms uses step 0_1`() = runTest {
+        val meat = leche.copy(quantity = 1.0, unit = QuantityUnit.KILOGRAMS)
+        every { observeFoodItem(ObserveFoodItemParams(itemId)) } returns flowOf(meat)
+        coEvery { updateQuantity(any()) } returns Unit
+        val viewModel = viewModel()
+
+        viewModel.uiState.test {
+            awaitLoaded()
+            viewModel.onEvent(FoodDetailEvent.IncrementQuantity)
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        coVerify { updateQuantity(UpdateQuantityParams(itemId, 1.1)) }
+    }
+
+    @Test
+    fun `quantity set updates to exact value`() = runTest {
+        every { observeFoodItem(ObserveFoodItemParams(itemId)) } returns flowOf(leche)
+        coEvery { updateQuantity(any()) } returns Unit
+        val viewModel = viewModel()
+
+        viewModel.uiState.test {
+            awaitLoaded()
+            viewModel.onEvent(FoodDetailEvent.QuantitySet(347.0))
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        coVerify { updateQuantity(UpdateQuantityParams(itemId, 347.0)) }
+    }
+
+    @Test
+    fun `quantity set to zero emits depleted`() = runTest {
+        every { observeFoodItem(ObserveFoodItemParams(itemId)) } returns flowOf(leche)
+        coEvery { updateQuantity(any()) } returns Unit
+        val viewModel = viewModel()
+
+        viewModel.uiState.test {
+            awaitLoaded()
+            viewModel.effects.test {
+                viewModel.onEvent(FoodDetailEvent.QuantitySet(0.0))
+                assertEquals(FoodDetailEffect.QuantityDepleted, awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        coVerify { updateQuantity(UpdateQuantityParams(itemId, 0.0)) }
     }
 
     @Test
