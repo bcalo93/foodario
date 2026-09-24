@@ -114,7 +114,7 @@ private fun FoodarioBottomBar(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(64.dp),
+                .height(FoodarioTheme.dimensions.bottomBar),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             BottomBarItem(
@@ -155,12 +155,12 @@ private fun BottomBarItem(
         modifier = modifier
             .fillMaxSize()
             .clickable(onClick = onClick)
-            .padding(vertical = 4.dp),
+            .padding(vertical = FoodarioTheme.dimensions.xs),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
         icon()
-        Spacer(Modifier.height(2.dp))
+        Spacer(Modifier.height(FoodarioTheme.dimensions.xxs))
         Text(text = label, style = typography.labelHand, color = tint)
     }
 }

@@ -57,14 +57,14 @@ fun QuickAddBar(
     Column(modifier = modifier) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(FoodarioTheme.dimensions.md),
         ) {
             BasicTextField(
                 value = text,
                 onValueChange = { text = it },
                 modifier = Modifier
                     .weight(1f)
-                    .defaultMinSize(minHeight = 48.dp)
+                    .defaultMinSize(minHeight = FoodarioTheme.dimensions.touchTarget)
                     .drawBehind {
                         val y = size.height - 2.dp.toPx()
                         drawLine(
@@ -78,7 +78,7 @@ fun QuickAddBar(
                             ),
                         )
                     }
-                    .padding(vertical = 12.dp),
+                    .padding(vertical = FoodarioTheme.dimensions.md),
                 textStyle = typography.body.copy(color = colors.ink),
                 cursorBrush = SolidColor(colors.penBlue),
                 decorationBox = { innerTextField ->
@@ -104,10 +104,10 @@ fun QuickAddBar(
                 },
             )
         }
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(FoodarioTheme.dimensions.md))
         Row(
             modifier = Modifier.horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(FoodarioTheme.dimensions.sm),
         ) {
             FoodCategory.entries.forEach { category ->
                 CategoryChip(
@@ -126,7 +126,7 @@ private fun AddButton(onClick: () -> Unit) {
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
-            .size(48.dp)
+            .size(FoodarioTheme.dimensions.touchTarget)
             .clip(CircleShape)
             .clickable(onClick = onClick)
             .semantics { contentDescription = "Agregar alimento" },
@@ -170,7 +170,7 @@ private fun CategoryChip(
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
-            .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
+            .defaultMinSize(minWidth = FoodarioTheme.dimensions.touchTarget, minHeight = FoodarioTheme.dimensions.touchTarget)
             .clip(shape)
             .background(categoryColor(category))
             .border(
@@ -193,7 +193,7 @@ private fun QuickAddBarLightPreview() {
             modifier = Modifier
                 .fillMaxSize()
                 .background(FoodarioTheme.colors.paper)
-                .padding(16.dp),
+                .padding(FoodarioTheme.dimensions.lg),
         ) {
             QuickAddBar(
                 selectedCategory = FoodCategory.FRUITS,
@@ -212,7 +212,7 @@ private fun QuickAddBarDarkPreview() {
             modifier = Modifier
                 .fillMaxSize()
                 .background(FoodarioTheme.colors.paper)
-                .padding(16.dp),
+                .padding(FoodarioTheme.dimensions.lg),
         ) {
             QuickAddBar(
                 selectedCategory = FoodCategory.FRUITS,

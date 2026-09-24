@@ -57,7 +57,7 @@ private fun DoodleDividerLightPreview() {
             modifier = Modifier
                 .fillMaxSize()
                 .background(FoodarioTheme.colors.paper)
-                .padding(16.dp),
+                .padding(FoodarioTheme.dimensions.lg),
         ) {
             DoodleDivider()
         }
@@ -72,7 +72,7 @@ private fun DoodleDividerDarkPreview() {
             modifier = Modifier
                 .fillMaxSize()
                 .background(FoodarioTheme.colors.paper)
-                .padding(16.dp),
+                .padding(FoodarioTheme.dimensions.lg),
         ) {
             DoodleDivider()
         }

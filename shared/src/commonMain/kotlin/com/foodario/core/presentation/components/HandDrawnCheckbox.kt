@@ -45,7 +45,7 @@ fun HandDrawnCheckbox(
 
     Box(
         modifier = modifier
-            .size(48.dp)
+            .size(FoodarioTheme.dimensions.touchTarget)
             .toggleable(
                 value = checked,
                 enabled = enabled,
@@ -131,7 +131,7 @@ private fun HandDrawnCheckboxLightPreview() {
             modifier = Modifier
                 .fillMaxSize()
                 .background(FoodarioTheme.colors.paper)
-                .padding(16.dp),
+                .padding(FoodarioTheme.dimensions.lg),
         ) {
             Row {
                 HandDrawnCheckbox(checked = false, onCheckedChange = {})
@@ -150,7 +150,7 @@ private fun HandDrawnCheckboxDarkPreview() {
             modifier = Modifier
                 .fillMaxSize()
                 .background(FoodarioTheme.colors.paper)
-                .padding(16.dp),
+                .padding(FoodarioTheme.dimensions.lg),
         ) {
             Row {
                 HandDrawnCheckbox(checked = false, onCheckedChange = {})

@@ -121,7 +121,7 @@ fun FoodDetailScreen(
                         modifier = Modifier
                             .fillMaxSize()
                             .notebookMargin()
-                            .padding(end = 16.dp),
+                            .padding(end = FoodarioTheme.dimensions.lg),
                         contentAlignment = Alignment.Center,
                     ) {
                         Text(
@@ -138,7 +138,7 @@ fun FoodDetailScreen(
                         modifier = Modifier
                             .fillMaxSize()
                             .notebookMargin()
-                            .padding(end = 16.dp),
+                            .padding(end = FoodarioTheme.dimensions.lg),
                         contentAlignment = Alignment.Center,
                     ) {
                         Text(
@@ -164,7 +164,7 @@ fun FoodDetailScreen(
             hostState = snackbarHostState,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(16.dp),
+                .padding(FoodarioTheme.dimensions.lg),
         )
 
         if (showDeleteDialog && item != null) {
@@ -213,22 +213,22 @@ private fun DetailContent(
             .fillMaxSize()
             .notebookMargin()
             .verticalScroll(rememberScrollState())
-            .padding(end = 16.dp),
+            .padding(end = FoodarioTheme.dimensions.lg),
     ) {
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(FoodarioTheme.dimensions.lg))
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .clip(RoundedCornerShape(4.dp))
                 .clickable { showCategoryDialog = true }
-                .heightIn(min = 48.dp)
+                .heightIn(min = FoodarioTheme.dimensions.touchTarget)
                 .semantics {
                     role = Role.Button
                     contentDescription = "Cambiar categoría"
                 },
         ) {
             Text(text = item.category.emoji, fontSize = 32.sp)
-            Spacer(Modifier.width(8.dp))
+            Spacer(Modifier.width(FoodarioTheme.dimensions.sm))
             Text(
                 text = item.category.displayName,
                 style = typography.labelHand,
@@ -236,18 +236,18 @@ private fun DetailContent(
                 modifier = Modifier
                     .clip(RoundedCornerShape(4.dp))
                     .background(categoryColor(item.category))
-                    .padding(horizontal = 4.dp, vertical = 1.dp),
+                    .padding(horizontal = FoodarioTheme.dimensions.xs, vertical = FoodarioTheme.dimensions.xxs),
             )
         }
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(FoodarioTheme.dimensions.sm))
         Text(
             text = item.name,
             style = typography.displayHand,
             color = colors.ink,
         )
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(FoodarioTheme.dimensions.lg))
         DoodleDivider()
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(FoodarioTheme.dimensions.lg))
 
         QuantityStepper(
             quantity = item.quantity,
@@ -258,7 +258,7 @@ private fun DetailContent(
             onUnitClick = { showUnitDialog = true },
             modifier = Modifier.fillMaxWidth(),
         )
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(FoodarioTheme.dimensions.md))
 
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -268,16 +268,16 @@ private fun DetailContent(
                 checked = item.isFrozen,
                 onCheckedChange = { onEvent(FoodDetailEvent.ToggleFrozen) },
             )
-            Spacer(Modifier.width(8.dp))
+            Spacer(Modifier.width(FoodarioTheme.dimensions.sm))
             Text(
                 text = "Congelado",
                 style = typography.labelHand,
                 color = colors.ink,
             )
         }
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(FoodarioTheme.dimensions.lg))
         DoodleDivider()
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(FoodarioTheme.dimensions.lg))
 
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -299,7 +299,7 @@ private fun DetailContent(
                 Text(text = "Editar", color = colors.penBlue)
             }
         }
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(FoodarioTheme.dimensions.lg))
 
         DetailActionButton(
             text = "Agregar a la lista de compras",
@@ -307,7 +307,7 @@ private fun DetailContent(
             onClick = { onEvent(FoodDetailEvent.AddToShoppingList) },
             modifier = Modifier.fillMaxWidth(),
         )
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(FoodarioTheme.dimensions.md))
 
         DetailActionButton(
             text = "Eliminar",
@@ -315,7 +315,7 @@ private fun DetailContent(
             onClick = onDeleteRequest,
             modifier = Modifier.fillMaxWidth(),
         )
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(FoodarioTheme.dimensions.xl))
     }
 
     if (showQuantityDialog) {
@@ -434,7 +434,7 @@ private fun CategorySelectionDialog(
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Text(text = category.emoji, fontSize = 24.sp)
-                            Spacer(Modifier.width(8.dp))
+                            Spacer(Modifier.width(FoodarioTheme.dimensions.sm))
                             Text(
                                 text = category.displayName,
                                 style = typography.body,
@@ -563,7 +563,7 @@ private fun DetailActionButton(
             .clip(shape)
             .border(1.5.dp, color, shape)
             .clickable(onClick = onClick)
-            .padding(horizontal = 20.dp, vertical = 10.dp),
+            .padding(horizontal = FoodarioTheme.dimensions.xl, vertical = FoodarioTheme.dimensions.md),
     )
 }
 
@@ -603,7 +603,7 @@ private fun QuantityEditDialog(
                     singleLine = true,
                     modifier = Modifier.weight(1f),
                 )
-                Spacer(Modifier.width(8.dp))
+                Spacer(Modifier.width(FoodarioTheme.dimensions.sm))
                 Text(
                     text = unitLabel(unit),
                     style = typography.body,
@@ -677,7 +677,7 @@ private fun ExpirationDialog(
                         style = FoodarioTheme.typography.titleHand,
                         color = colors.ink,
                         maxLines = 1,
-                        modifier = Modifier.padding(start = 24.dp, end = 12.dp, bottom = 12.dp),
+                        modifier = Modifier.padding(start = FoodarioTheme.dimensions.xl, end = FoodarioTheme.dimensions.md, bottom = FoodarioTheme.dimensions.md),
                     )
                 },
             )
