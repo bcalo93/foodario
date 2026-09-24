@@ -33,6 +33,7 @@ val presentationModule = module {
         ShoppingListViewModel(
             observeShoppingList = get(named("observeShoppingList")),
             moveToInventory = get(named("moveToInventory")),
+            addToShoppingList = get(named("addToShoppingList")),
         )
     }
 }

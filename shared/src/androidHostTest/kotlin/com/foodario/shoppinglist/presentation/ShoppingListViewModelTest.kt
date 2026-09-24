@@ -8,6 +8,7 @@ import com.foodario.inventory.domain.model.FoodCategory
 import com.foodario.inventory.domain.model.FoodItem
 import com.foodario.inventory.domain.model.QuantityUnit
 import com.foodario.shoppinglist.domain.model.ShoppingItem
+import com.foodario.shoppinglist.domain.usecase.AddToShoppingListParams
 import com.foodario.shoppinglist.domain.usecase.MoveToInventoryParams
 import com.foodario.shoppinglist.domain.usecase.ObserveShoppingListParams
 import io.mockk.coEvery
@@ -32,6 +33,7 @@ class ShoppingListViewModelTest {
 
     private val observeShoppingList = mockk<ObserveUseCase<ObserveShoppingListParams, List<ShoppingItem>>>()
     private val moveToInventory = mockk<UseCase<MoveToInventoryParams, FoodItem>>()
+    private val addToShoppingList = mockk<UseCase<AddToShoppingListParams, Unit>>()
 
     private val leche = ShoppingItem(
         id = 1L,
@@ -67,7 +69,7 @@ class ShoppingListViewModelTest {
     @Test
     fun `emits items when observing`() = runTest {
         every { observeShoppingList(ObserveShoppingListParams) } returns flowOf(listOf(leche))
-        val viewModel = ShoppingListViewModel(observeShoppingList, moveToInventory)
+        val viewModel = ShoppingListViewModel(observeShoppingList, moveToInventory, addToShoppingList)
 
         viewModel.uiState.test {
             val loaded = awaitLoaded()
@@ -79,7 +81,7 @@ class ShoppingListViewModelTest {
     @Test
     fun `toggle checked adds id to checkedIds`() = runTest {
         every { observeShoppingList(ObserveShoppingListParams) } returns flowOf(listOf(leche))
-        val viewModel = ShoppingListViewModel(observeShoppingList, moveToInventory)
+        val viewModel = ShoppingListViewModel(observeShoppingList, moveToInventory, addToShoppingList)
 
         viewModel.uiState.test {
             awaitLoaded()
@@ -93,7 +95,7 @@ class ShoppingListViewModelTest {
     @Test
     fun `toggle checked twice removes id from checkedIds`() = runTest {
         every { observeShoppingList(ObserveShoppingListParams) } returns flowOf(listOf(leche))
-        val viewModel = ShoppingListViewModel(observeShoppingList, moveToInventory)
+        val viewModel = ShoppingListViewModel(observeShoppingList, moveToInventory, addToShoppingList)
 
         viewModel.uiState.test {
             awaitLoaded()
@@ -110,7 +112,7 @@ class ShoppingListViewModelTest {
     fun `move to inventory calls move use case`() = runTest {
         every { observeShoppingList(ObserveShoppingListParams) } returns flowOf(listOf(leche))
         coEvery { moveToInventory(any()) } returns foodItem
-        val viewModel = ShoppingListViewModel(observeShoppingList, moveToInventory)
+        val viewModel = ShoppingListViewModel(observeShoppingList, moveToInventory, addToShoppingList)
 
         viewModel.uiState.test {
             awaitLoaded()
@@ -119,6 +121,37 @@ class ShoppingListViewModelTest {
         }
 
         coVerify { moveToInventory(MoveToInventoryParams(1L)) }
+    }
+
+    @Test
+    fun `quick add calls add use case with selected category`() = runTest {
+        every { observeShoppingList(ObserveShoppingListParams) } returns flowOf(listOf(leche))
+        coEvery { addToShoppingList(any()) } returns Unit
+        val viewModel = ShoppingListViewModel(observeShoppingList, moveToInventory, addToShoppingList)
+
+        viewModel.uiState.test {
+            awaitLoaded()
+            viewModel.onEvent(ShoppingListEvent.QuickAddCategorySelected(FoodCategory.DAIRY))
+            viewModel.onEvent(ShoppingListEvent.QuickAdd("Leche"))
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        coVerify { addToShoppingList(AddToShoppingListParams(name = "Leche", category = FoodCategory.DAIRY)) }
+    }
+
+    @Test
+    fun `quick add defaults to other category`() = runTest {
+        every { observeShoppingList(ObserveShoppingListParams) } returns flowOf(listOf(leche))
+        coEvery { addToShoppingList(any()) } returns Unit
+        val viewModel = ShoppingListViewModel(observeShoppingList, moveToInventory, addToShoppingList)
+
+        viewModel.uiState.test {
+            awaitLoaded()
+            viewModel.onEvent(ShoppingListEvent.QuickAdd("Pan"))
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        coVerify { addToShoppingList(AddToShoppingListParams(name = "Pan", category = FoodCategory.OTHER)) }
     }
 
     private suspend fun ReceiveTurbine<ShoppingListUiState>.awaitLoaded(): ShoppingListUiState {
