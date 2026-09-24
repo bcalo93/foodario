@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -58,7 +59,10 @@ fun CategoryGrid(
     }
     val tail = categories.filter { it !in head }
 
-    Column(modifier = modifier) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
         Row(
             horizontalArrangement = Arrangement.spacedBy(FoodarioTheme.dimensions.sm),
             verticalAlignment = Alignment.CenterVertically,
@@ -74,10 +78,15 @@ fun CategoryGrid(
         }
         AnimatedVisibility(
             visible = expanded,
+            modifier = Modifier.fillMaxWidth(),
             enter = expandVertically(animationSpec = tween(200), expandFrom = Alignment.Top) + fadeIn(tween(200)),
             exit = shrinkVertically(animationSpec = tween(200), shrinkTowards = Alignment.Top) + fadeOut(tween(150)),
         ) {
-            Column(verticalArrangement = Arrangement.spacedBy(FoodarioTheme.dimensions.sm)) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(FoodarioTheme.dimensions.sm),
+            ) {
                 Spacer(Modifier.height(FoodarioTheme.dimensions.sm))
                 tail.chunked(CategoryColumnCount).forEach { row ->
                     CategoryRow(row, onCategoryClick)
