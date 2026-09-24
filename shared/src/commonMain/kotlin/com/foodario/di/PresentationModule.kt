@@ -23,7 +23,6 @@ val presentationModule = module {
             updateQuantity = get(named("updateQuantity")),
             updateCategory = get(named("updateCategory")),
             updateUnit = get(named("updateUnit")),
-            consumeFoodItem = get(named("consumeFoodItem")),
             toggleFrozen = get(named("toggleFrozen")),
             updateExpiration = get(named("updateExpiration")),
             deleteFoodItem = get(named("deleteFoodItem")),

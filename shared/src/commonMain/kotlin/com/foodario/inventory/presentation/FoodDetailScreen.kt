@@ -10,20 +10,25 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDefaults
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -34,6 +39,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -52,6 +61,7 @@ import com.foodario.core.presentation.theme.categoryColor
 import com.foodario.inventory.domain.model.FoodCategory
 import com.foodario.inventory.domain.model.FoodItem
 import com.foodario.inventory.domain.model.QuantityUnit
+import com.foodario.inventory.domain.model.formatQuantityNumber
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.number
@@ -196,6 +206,7 @@ private fun DetailContent(
     var showCategoryDialog by remember { mutableStateOf(false) }
     var showExpirationDialog by remember { mutableStateOf(false) }
     var showUnitDialog by remember { mutableStateOf(false) }
+    var showQuantityDialog by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -206,8 +217,15 @@ private fun DetailContent(
     ) {
         Spacer(Modifier.height(16.dp))
         Row(
-            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .clip(RoundedCornerShape(4.dp))
+                .clickable { showCategoryDialog = true }
+                .heightIn(min = 48.dp)
+                .semantics {
+                    role = Role.Button
+                    contentDescription = "Cambiar categoría"
+                },
         ) {
             Text(text = item.category.emoji, fontSize = 32.sp)
             Spacer(Modifier.width(8.dp))
@@ -220,10 +238,6 @@ private fun DetailContent(
                     .background(categoryColor(item.category))
                     .padding(horizontal = 4.dp, vertical = 1.dp),
             )
-            Spacer(Modifier.weight(1f))
-            TextButton(onClick = { showCategoryDialog = true }) {
-                Text(text = "Editar", color = colors.penBlue)
-            }
         }
         Spacer(Modifier.height(8.dp))
         Text(
@@ -240,21 +254,8 @@ private fun DetailContent(
             unit = item.unit,
             onIncrement = { onEvent(FoodDetailEvent.IncrementQuantity) },
             onDecrement = { onEvent(FoodDetailEvent.DecrementQuantity) },
-            modifier = Modifier.fillMaxWidth(),
-        )
-        Spacer(Modifier.height(8.dp))
-
-        EditableDetailRow(
-            label = "Tipo de unidad",
-            value = item.unit.displayName,
-            onEdit = { showUnitDialog = true },
-        )
-        Spacer(Modifier.height(16.dp))
-
-        DetailActionButton(
-            text = "Consumí 1",
-            color = colors.penBlue,
-            onClick = { onEvent(FoodDetailEvent.Consume) },
+            onQuantityClick = { showQuantityDialog = true },
+            onUnitClick = { showUnitDialog = true },
             modifier = Modifier.fillMaxWidth(),
         )
         Spacer(Modifier.height(12.dp))
@@ -317,6 +318,18 @@ private fun DetailContent(
         Spacer(Modifier.height(24.dp))
     }
 
+    if (showQuantityDialog) {
+        QuantityEditDialog(
+            quantity = item.quantity,
+            unit = item.unit,
+            onDismiss = { showQuantityDialog = false },
+            onConfirm = { value ->
+                showQuantityDialog = false
+                onEvent(FoodDetailEvent.QuantitySet(value))
+            },
+        )
+    }
+
     if (showExpirationDialog) {
         ExpirationDialog(
             currentDate = item.expirationDate,
@@ -348,29 +361,6 @@ private fun DetailContent(
                 onEvent(FoodDetailEvent.UnitChanged(unit))
             },
         )
-    }
-}
-
-@Composable
-private fun EditableDetailRow(
-    label: String,
-    value: String,
-    onEdit: () -> Unit,
-) {
-    val colors = FoodarioTheme.colors
-    val typography = FoodarioTheme.typography
-
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(text = label, style = typography.label, color = colors.inkSoft)
-            Text(text = value, style = typography.body, color = colors.ink)
-        }
-        TextButton(onClick = onEdit) {
-            Text(text = "Editar", color = colors.penBlue)
-        }
     }
 }
 
@@ -577,6 +567,74 @@ private fun DetailActionButton(
     )
 }
 
+@Composable
+private fun QuantityEditDialog(
+    quantity: Double,
+    unit: QuantityUnit,
+    onDismiss: () -> Unit,
+    onConfirm: (Double) -> Unit,
+) {
+    val colors = FoodarioTheme.colors
+    val typography = FoodarioTheme.typography
+    var text by remember { mutableStateOf(formatQuantityNumber(quantity)) }
+
+    val parsed = text.trim().replace(',', '.').toDoubleOrNull()
+    val isValid = parsed != null && parsed >= 0.0
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = colors.paperElevated,
+        title = {
+            Text(
+                text = "Cantidad",
+                style = typography.titleHand,
+                color = colors.ink,
+            )
+        },
+        text = {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                OutlinedTextField(
+                    value = text,
+                    onValueChange = { text = it },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    singleLine = true,
+                    modifier = Modifier.weight(1f),
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    text = unitLabel(unit),
+                    style = typography.body,
+                    color = colors.ink,
+                )
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(text = "Cancelar", color = colors.inkSoft)
+            }
+        },
+        confirmButton = {
+            TextButton(
+                enabled = isValid,
+                onClick = { parsed?.let { onConfirm(it) } },
+            ) {
+                Text(text = "Guardar", color = colors.penBlue)
+            }
+        },
+    )
+}
+
+private fun unitLabel(unit: QuantityUnit): String = when (unit) {
+    QuantityUnit.UNIT -> "unidad"
+    QuantityUnit.GRAMS -> "g"
+    QuantityUnit.KILOGRAMS -> "kg"
+    QuantityUnit.MILLILITERS -> "ml"
+    QuantityUnit.LITERS -> "L"
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ExpirationDialog(
@@ -619,6 +677,7 @@ private fun ExpirationDialog(
                         style = FoodarioTheme.typography.titleHand,
                         color = colors.ink,
                         maxLines = 1,
+                        modifier = Modifier.padding(start = 24.dp, end = 12.dp, bottom = 12.dp),
                     )
                 },
             )
@@ -669,7 +728,6 @@ private fun FoodDetailScreenLightPreview() {
                 updateQuantity = previewUnitUseCase(),
                 updateCategory = previewUnitUseCase(),
                 updateUnit = previewUnitUseCase(),
-                consumeFoodItem = previewUnitUseCase(),
                 toggleFrozen = previewUnitUseCase(),
                 updateExpiration = previewUnitUseCase(),
                 deleteFoodItem = previewUnitUseCase(),
@@ -691,7 +749,6 @@ private fun FoodDetailScreenDarkPreview() {
                 updateQuantity = previewUnitUseCase(),
                 updateCategory = previewUnitUseCase(),
                 updateUnit = previewUnitUseCase(),
-                consumeFoodItem = previewUnitUseCase(),
                 toggleFrozen = previewUnitUseCase(),
                 updateExpiration = previewUnitUseCase(),
                 deleteFoodItem = previewUnitUseCase(),

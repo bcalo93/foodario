@@ -2,6 +2,7 @@ package com.foodario.core.presentation.components
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Text
@@ -31,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.foodario.core.presentation.theme.FoodarioTheme
 import com.foodario.inventory.domain.model.QuantityUnit
+import com.foodario.inventory.domain.model.formatQuantityNumber
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -41,6 +44,8 @@ fun QuantityStepper(
     unit: QuantityUnit,
     onIncrement: () -> Unit,
     onDecrement: () -> Unit,
+    onQuantityClick: () -> Unit,
+    onUnitClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colors = FoodarioTheme.colors
@@ -65,12 +70,33 @@ fun QuantityStepper(
                 text = formatQuantityNumber(quantity),
                 style = typography.quantityHand,
                 color = colors.ink,
+                modifier = Modifier
+                    .heightIn(min = 48.dp)
+                    .clickable(onClick = onQuantityClick)
+                    .semantics {
+                        role = Role.Button
+                        contentDescription = "Editar cantidad"
+                    },
             )
             Text(
                 text = unitLabel(quantity, unit),
                 style = typography.label,
                 color = colors.inkSoft,
+                modifier = Modifier
+                    .heightIn(min = 48.dp)
+                    .clickable(onClick = onUnitClick)
+                    .semantics {
+                        role = Role.Button
+                        contentDescription = "Cambiar unidad"
+                    },
             )
+            if (unit.step != 1.0) {
+                Text(
+                    text = "de a ${formatStep(unit)}",
+                    style = typography.caption,
+                    color = colors.inkSoft,
+                )
+            }
         }
         StepperButton(
             symbol = "+",
@@ -81,9 +107,6 @@ fun QuantityStepper(
     }
 }
 
-private fun formatQuantityNumber(quantity: Double): String =
-    if (quantity % 1.0 == 0.0) quantity.toLong().toString() else quantity.toString()
-
 private fun unitLabel(quantity: Double, unit: QuantityUnit): String = when (unit) {
     QuantityUnit.UNIT -> if (quantity == 1.0) "unidad" else "unidades"
     QuantityUnit.GRAMS -> "g"
@@ -91,6 +114,9 @@ private fun unitLabel(quantity: Double, unit: QuantityUnit): String = when (unit
     QuantityUnit.MILLILITERS -> "ml"
     QuantityUnit.LITERS -> "L"
 }
+
+private fun formatStep(unit: QuantityUnit): String =
+    "${formatQuantityNumber(unit.step)} ${unitLabel(unit.step, unit)}"
 
 @Composable
 private fun StepperButton(
@@ -152,7 +178,7 @@ private fun Modifier.repeatPress(onAction: () -> Unit): Modifier {
 
 @Preview
 @Composable
-private fun QuantityStepperLightPreview() {
+private fun QuantityStepperUnitLightPreview() {
     FoodarioTheme(darkTheme = false) {
         Box(
             modifier = Modifier
@@ -165,6 +191,8 @@ private fun QuantityStepperLightPreview() {
                 unit = QuantityUnit.UNIT,
                 onIncrement = {},
                 onDecrement = {},
+                onQuantityClick = {},
+                onUnitClick = {},
             )
         }
     }
@@ -172,7 +200,7 @@ private fun QuantityStepperLightPreview() {
 
 @Preview
 @Composable
-private fun QuantityStepperDarkPreview() {
+private fun QuantityStepperUnitDarkPreview() {
     FoodarioTheme(darkTheme = true) {
         Box(
             modifier = Modifier
@@ -185,6 +213,52 @@ private fun QuantityStepperDarkPreview() {
                 unit = QuantityUnit.UNIT,
                 onIncrement = {},
                 onDecrement = {},
+                onQuantityClick = {},
+                onUnitClick = {},
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun QuantityStepperGramsLightPreview() {
+    FoodarioTheme(darkTheme = false) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(FoodarioTheme.colors.paper)
+                .padding(16.dp),
+        ) {
+            QuantityStepper(
+                quantity = 300.0,
+                unit = QuantityUnit.GRAMS,
+                onIncrement = {},
+                onDecrement = {},
+                onQuantityClick = {},
+                onUnitClick = {},
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun QuantityStepperGramsDarkPreview() {
+    FoodarioTheme(darkTheme = true) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(FoodarioTheme.colors.paper)
+                .padding(16.dp),
+        ) {
+            QuantityStepper(
+                quantity = 300.0,
+                unit = QuantityUnit.GRAMS,
+                onIncrement = {},
+                onDecrement = {},
+                onQuantityClick = {},
+                onUnitClick = {},
             )
         }
     }
