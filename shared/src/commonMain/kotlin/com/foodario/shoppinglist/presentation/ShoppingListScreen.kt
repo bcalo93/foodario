@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -33,7 +34,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.foodario.core.domain.usecase.UseCase
+import com.foodario.core.presentation.components.DoodleDivider
 import com.foodario.core.presentation.components.HandDrawnCheckbox
+import com.foodario.core.presentation.components.QuickAddBar
 import com.foodario.core.presentation.components.emoji
 import com.foodario.core.presentation.components.formatQuantity
 import com.foodario.core.presentation.components.notebookMargin
@@ -43,6 +46,7 @@ import com.foodario.inventory.domain.model.FoodCategory
 import com.foodario.inventory.domain.model.FoodItem
 import com.foodario.inventory.domain.model.QuantityUnit
 import com.foodario.shoppinglist.domain.model.ShoppingItem
+import com.foodario.shoppinglist.domain.usecase.AddToShoppingListParams
 import com.foodario.shoppinglist.domain.usecase.MoveToInventoryParams
 import kotlin.time.Instant
 import org.koin.compose.viewmodel.koinViewModel
@@ -52,13 +56,15 @@ fun ShoppingListScreen(
     viewModel: ShoppingListViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val quickAddCategory by viewModel.quickAddCategory.collectAsStateWithLifecycle()
     val colors = FoodarioTheme.colors
     val typography = FoodarioTheme.typography
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(colors.paper),
+            .background(colors.paper)
+            .imePadding(),
     ) {
         Text(
             text = "Compras",
@@ -74,7 +80,8 @@ fun ShoppingListScreen(
             uiState.isLoading -> {
                 Box(
                     modifier = Modifier
-                        .fillMaxSize()
+                        .weight(1f)
+                        .fillMaxWidth()
                         .notebookMargin(),
                     contentAlignment = Alignment.Center,
                 ) {
@@ -85,7 +92,8 @@ fun ShoppingListScreen(
             uiState.error != null -> {
                 Box(
                     modifier = Modifier
-                        .fillMaxSize()
+                        .weight(1f)
+                        .fillMaxWidth()
                         .notebookMargin()
                         .padding(end = FoodarioTheme.dimensions.lg),
                     contentAlignment = Alignment.Center,
@@ -102,7 +110,8 @@ fun ShoppingListScreen(
             uiState.items.isEmpty() -> {
                 Box(
                     modifier = Modifier
-                        .fillMaxSize()
+                        .weight(1f)
+                        .fillMaxWidth()
                         .notebookMargin()
                         .padding(end = FoodarioTheme.dimensions.lg),
                     contentAlignment = Alignment.Center,
@@ -123,7 +132,8 @@ fun ShoppingListScreen(
             else -> {
                 LazyColumn(
                     modifier = Modifier
-                        .fillMaxSize()
+                        .weight(1f)
+                        .fillMaxWidth()
                         .notebookMargin(),
                 ) {
                     items(uiState.items, key = { it.id }) { item ->
@@ -136,6 +146,20 @@ fun ShoppingListScreen(
                 }
             }
         }
+
+        DoodleDivider()
+        QuickAddBar(
+            selectedCategory = quickAddCategory,
+            onCategorySelected = { viewModel.onEvent(ShoppingListEvent.QuickAddCategorySelected(it)) },
+            onAdd = { viewModel.onEvent(ShoppingListEvent.QuickAdd(it)) },
+            placeholder = "Escribí para comprar…",
+            addContentDescription = "Agregar a compras",
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(colors.paper)
+                .padding(horizontal = FoodarioTheme.dimensions.lg)
+                .padding(bottom = FoodarioTheme.dimensions.sm),
+        )
     }
 }
 
@@ -283,6 +307,11 @@ private fun fakeMoveToInventoryUseCase(): UseCase<MoveToInventoryParams, FoodIte
             )
     }
 
+private fun fakeAddToShoppingListUseCase(): UseCase<AddToShoppingListParams, Unit> =
+    object : UseCase<AddToShoppingListParams, Unit> {
+        override suspend fun invoke(params: AddToShoppingListParams) = Unit
+    }
+
 @Preview
 @Composable
 private fun ShoppingListScreenLightPreview() {
@@ -291,6 +320,7 @@ private fun ShoppingListScreenLightPreview() {
             viewModel = ShoppingListViewModel(
                 observeShoppingList = previewObserveUseCase(sampleShoppingList()),
                 moveToInventory = fakeMoveToInventoryUseCase(),
+                addToShoppingList = fakeAddToShoppingListUseCase(),
             ),
         )
     }
@@ -304,6 +334,7 @@ private fun ShoppingListScreenDarkPreview() {
             viewModel = ShoppingListViewModel(
                 observeShoppingList = previewObserveUseCase(sampleShoppingList()),
                 moveToInventory = fakeMoveToInventoryUseCase(),
+                addToShoppingList = fakeAddToShoppingListUseCase(),
             ),
         )
     }

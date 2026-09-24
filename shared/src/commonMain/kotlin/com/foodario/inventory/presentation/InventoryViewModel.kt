@@ -11,6 +11,7 @@ import com.foodario.inventory.domain.usecase.DeleteFoodItemParams
 import com.foodario.inventory.domain.usecase.ObserveInventoryParams
 import com.foodario.inventory.domain.usecase.UpdateQuantityParams
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -20,6 +21,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -30,6 +32,14 @@ sealed interface InventoryEvent {
     data class QuickAddCategorySelected(val category: FoodCategory) : InventoryEvent
     data class IncreaseQuantity(val itemId: Long, val currentQuantity: Double) : InventoryEvent
     data class Delete(val itemId: Long) : InventoryEvent
+}
+
+sealed interface InventoryEffect {
+    data class ItemAdded(
+        val itemId: Long,
+        val name: String,
+        val category: FoodCategory,
+    ) : InventoryEffect
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -43,6 +53,10 @@ class InventoryViewModel(
     private val searchQuery = MutableStateFlow("")
     private val selectedCategory = MutableStateFlow<FoodCategory?>(null)
     private val addCategory = MutableStateFlow(FoodCategory.OTHER)
+
+    private val effectChannel = Channel<InventoryEffect>(Channel.BUFFERED)
+
+    val effects = effectChannel.receiveAsFlow()
 
     val quickAddCategory: StateFlow<FoodCategory> = addCategory.asStateFlow()
 
@@ -92,6 +106,14 @@ class InventoryViewModel(
             is InventoryEvent.QuickAdd -> viewModelScope.launch {
                 runCatching {
                     addFoodItem(AddFoodItemParams(name = event.name, category = addCategory.value))
+                }.onSuccess { created ->
+                    effectChannel.send(
+                        InventoryEffect.ItemAdded(
+                            itemId = created.id,
+                            name = created.name,
+                            category = created.category,
+                        )
+                    )
                 }
             }
             is InventoryEvent.IncreaseQuantity -> viewModelScope.launch {

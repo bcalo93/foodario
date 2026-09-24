@@ -2,9 +2,7 @@ package com.foodario.core.presentation.components
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,9 +13,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -38,9 +34,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.foodario.core.presentation.theme.FoodarioTheme
-import com.foodario.core.presentation.theme.categoryColor
 import com.foodario.inventory.domain.model.FoodCategory
 
 @Composable
@@ -49,12 +43,21 @@ fun QuickAddBar(
     onCategorySelected: (FoodCategory) -> Unit,
     onAdd: (name: String) -> Unit,
     modifier: Modifier = Modifier,
+    placeholder: String = "Escribí un alimento…",
+    addContentDescription: String = "Agregar alimento",
+    categories: List<FoodCategory> = FoodCategory.entries,
 ) {
     val colors = FoodarioTheme.colors
     val typography = FoodarioTheme.typography
     var text by remember { mutableStateOf("") }
 
     Column(modifier = modifier) {
+        CategoryGrid(
+            selectedCategory = selectedCategory,
+            onCategoryClick = onCategorySelected,
+            categories = categories,
+        )
+        Spacer(Modifier.height(FoodarioTheme.dimensions.md))
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(FoodarioTheme.dimensions.md),
@@ -85,7 +88,7 @@ fun QuickAddBar(
                     Box {
                         if (text.isEmpty()) {
                             Text(
-                                text = "Escribí un alimento…",
+                                text = placeholder,
                                 style = typography.body,
                                 color = colors.inkSoft,
                             )
@@ -95,6 +98,7 @@ fun QuickAddBar(
                 },
             )
             AddButton(
+                contentDescription = addContentDescription,
                 onClick = {
                     val value = text.trim()
                     if (value.isNotEmpty()) {
@@ -104,24 +108,14 @@ fun QuickAddBar(
                 },
             )
         }
-        Spacer(Modifier.height(FoodarioTheme.dimensions.md))
-        Row(
-            modifier = Modifier.horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(FoodarioTheme.dimensions.sm),
-        ) {
-            FoodCategory.entries.forEach { category ->
-                CategoryChip(
-                    category = category,
-                    selected = category == selectedCategory,
-                    onClick = { onCategorySelected(category) },
-                )
-            }
-        }
     }
 }
 
 @Composable
-private fun AddButton(onClick: () -> Unit) {
+private fun AddButton(
+    contentDescription: String,
+    onClick: () -> Unit,
+) {
     val penBlue = FoodarioTheme.colors.penBlue
     Box(
         contentAlignment = Alignment.Center,
@@ -129,7 +123,7 @@ private fun AddButton(onClick: () -> Unit) {
             .size(FoodarioTheme.dimensions.touchTarget)
             .clip(CircleShape)
             .clickable(onClick = onClick)
-            .semantics { contentDescription = "Agregar alimento" },
+            .semantics { this.contentDescription = contentDescription },
     ) {
         Canvas(Modifier.fillMaxSize()) {
             drawCircle(
@@ -155,33 +149,6 @@ private fun AddButton(onClick: () -> Unit) {
                 cap = StrokeCap.Round,
             )
         }
-    }
-}
-
-@Composable
-private fun CategoryChip(
-    category: FoodCategory,
-    selected: Boolean,
-    onClick: () -> Unit,
-) {
-    val colors = FoodarioTheme.colors
-    val borderColor = if (selected) colors.penBlue else colors.pencilGray
-    val shape = RoundedCornerShape(50)
-    Box(
-        contentAlignment = Alignment.Center,
-        modifier = Modifier
-            .defaultMinSize(minWidth = FoodarioTheme.dimensions.touchTarget, minHeight = FoodarioTheme.dimensions.touchTarget)
-            .clip(shape)
-            .background(categoryColor(category))
-            .border(
-                width = if (selected) 2.dp else 1.dp,
-                color = borderColor,
-                shape = shape,
-            )
-            .clickable(onClick = onClick)
-            .semantics { contentDescription = category.displayName },
-    ) {
-        Text(text = category.emoji, fontSize = 20.sp)
     }
 }
 

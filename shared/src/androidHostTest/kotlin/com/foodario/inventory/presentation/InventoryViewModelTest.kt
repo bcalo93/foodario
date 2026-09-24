@@ -133,6 +133,26 @@ class InventoryViewModelTest {
     }
 
     @Test
+    fun `quick add emits item added effect`() = runTest {
+        every { observeInventory(any()) } returns flowOf(emptyList())
+        coEvery { addFoodItem(any()) } returns leche
+        val viewModel = viewModel()
+
+        viewModel.effects.test {
+            viewModel.onEvent(InventoryEvent.QuickAdd("Leche"))
+            assertEquals(
+                InventoryEffect.ItemAdded(
+                    itemId = leche.id,
+                    name = leche.name,
+                    category = leche.category,
+                ),
+                awaitItem(),
+            )
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
     fun `increase quantity calls update quantity with one more`() = runTest {
         every { observeInventory(any()) } returns flowOf(listOf(leche))
         coEvery { updateQuantity(any()) } returns Unit
