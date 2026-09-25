@@ -10,6 +10,7 @@ import com.foodario.shoppinglist.domain.model.ShoppingItem
 import com.foodario.shoppinglist.domain.usecase.AddToShoppingListParams
 import com.foodario.shoppinglist.domain.usecase.MoveToInventoryParams
 import com.foodario.shoppinglist.domain.usecase.ObserveShoppingListParams
+import com.foodario.shoppinglist.domain.usecase.RemoveFromShoppingListParams
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -25,6 +26,7 @@ import kotlinx.coroutines.launch
 sealed interface ShoppingListEvent {
     data class ToggleChecked(val itemId: Long) : ShoppingListEvent
     data class MoveToInventory(val itemId: Long) : ShoppingListEvent
+    data class RemoveFromShoppingList(val itemId: Long) : ShoppingListEvent
     data class QuickAdd(val name: String) : ShoppingListEvent
     data class QuickAddCategorySelected(val category: FoodCategory) : ShoppingListEvent
 }
@@ -33,6 +35,7 @@ class ShoppingListViewModel(
     private val observeShoppingList: ObserveUseCase<ObserveShoppingListParams, List<ShoppingItem>>,
     private val moveToInventory: UseCase<MoveToInventoryParams, FoodItem>,
     private val addToShoppingList: UseCase<AddToShoppingListParams, Unit>,
+    private val removeFromShoppingList: UseCase<RemoveFromShoppingListParams, Unit>,
 ) : ViewModel() {
 
     private val checkedIds = MutableStateFlow<Set<Long>>(emptySet())
@@ -61,6 +64,12 @@ class ShoppingListViewModel(
             }
             is ShoppingListEvent.MoveToInventory -> viewModelScope.launch {
                 runCatching { moveToInventory(MoveToInventoryParams(event.itemId)) }
+            }
+            is ShoppingListEvent.RemoveFromShoppingList -> viewModelScope.launch {
+                runCatching {
+                    removeFromShoppingList(RemoveFromShoppingListParams(event.itemId))
+                    checkedIds.update { it - event.itemId }
+                }
             }
             is ShoppingListEvent.QuickAddCategorySelected -> addCategory.value = event.category
             is ShoppingListEvent.QuickAdd -> viewModelScope.launch {
