@@ -11,6 +11,7 @@ import com.foodario.shoppinglist.domain.model.ShoppingItem
 import com.foodario.shoppinglist.domain.usecase.AddToShoppingListParams
 import com.foodario.shoppinglist.domain.usecase.MoveToInventoryParams
 import com.foodario.shoppinglist.domain.usecase.ObserveShoppingListParams
+import com.foodario.shoppinglist.domain.usecase.RemoveFromShoppingListParams
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -34,6 +35,7 @@ class ShoppingListViewModelTest {
     private val observeShoppingList = mockk<ObserveUseCase<ObserveShoppingListParams, List<ShoppingItem>>>()
     private val moveToInventory = mockk<UseCase<MoveToInventoryParams, FoodItem>>()
     private val addToShoppingList = mockk<UseCase<AddToShoppingListParams, Unit>>()
+    private val removeFromShoppingList = mockk<UseCase<RemoveFromShoppingListParams, Unit>>()
 
     private val leche = ShoppingItem(
         id = 1L,
@@ -69,7 +71,12 @@ class ShoppingListViewModelTest {
     @Test
     fun `emits items when observing`() = runTest {
         every { observeShoppingList(ObserveShoppingListParams) } returns flowOf(listOf(leche))
-        val viewModel = ShoppingListViewModel(observeShoppingList, moveToInventory, addToShoppingList)
+        val viewModel = ShoppingListViewModel(
+            observeShoppingList,
+            moveToInventory,
+            addToShoppingList,
+            removeFromShoppingList,
+        )
 
         viewModel.uiState.test {
             val loaded = awaitLoaded()
@@ -81,7 +88,12 @@ class ShoppingListViewModelTest {
     @Test
     fun `toggle checked adds id to checkedIds`() = runTest {
         every { observeShoppingList(ObserveShoppingListParams) } returns flowOf(listOf(leche))
-        val viewModel = ShoppingListViewModel(observeShoppingList, moveToInventory, addToShoppingList)
+        val viewModel = ShoppingListViewModel(
+            observeShoppingList,
+            moveToInventory,
+            addToShoppingList,
+            removeFromShoppingList,
+        )
 
         viewModel.uiState.test {
             awaitLoaded()
@@ -95,7 +107,12 @@ class ShoppingListViewModelTest {
     @Test
     fun `toggle checked twice removes id from checkedIds`() = runTest {
         every { observeShoppingList(ObserveShoppingListParams) } returns flowOf(listOf(leche))
-        val viewModel = ShoppingListViewModel(observeShoppingList, moveToInventory, addToShoppingList)
+        val viewModel = ShoppingListViewModel(
+            observeShoppingList,
+            moveToInventory,
+            addToShoppingList,
+            removeFromShoppingList,
+        )
 
         viewModel.uiState.test {
             awaitLoaded()
@@ -112,7 +129,12 @@ class ShoppingListViewModelTest {
     fun `move to inventory calls move use case`() = runTest {
         every { observeShoppingList(ObserveShoppingListParams) } returns flowOf(listOf(leche))
         coEvery { moveToInventory(any()) } returns foodItem
-        val viewModel = ShoppingListViewModel(observeShoppingList, moveToInventory, addToShoppingList)
+        val viewModel = ShoppingListViewModel(
+            observeShoppingList,
+            moveToInventory,
+            addToShoppingList,
+            removeFromShoppingList,
+        )
 
         viewModel.uiState.test {
             awaitLoaded()
@@ -124,10 +146,35 @@ class ShoppingListViewModelTest {
     }
 
     @Test
+    fun `remove from shopping list calls remove use case`() = runTest {
+        every { observeShoppingList(ObserveShoppingListParams) } returns flowOf(listOf(leche))
+        coEvery { removeFromShoppingList(any()) } returns Unit
+        val viewModel = ShoppingListViewModel(
+            observeShoppingList,
+            moveToInventory,
+            addToShoppingList,
+            removeFromShoppingList,
+        )
+
+        viewModel.uiState.test {
+            awaitLoaded()
+            viewModel.onEvent(ShoppingListEvent.RemoveFromShoppingList(1L))
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        coVerify { removeFromShoppingList(RemoveFromShoppingListParams(1L)) }
+    }
+
+    @Test
     fun `quick add calls add use case with selected category`() = runTest {
         every { observeShoppingList(ObserveShoppingListParams) } returns flowOf(listOf(leche))
         coEvery { addToShoppingList(any()) } returns Unit
-        val viewModel = ShoppingListViewModel(observeShoppingList, moveToInventory, addToShoppingList)
+        val viewModel = ShoppingListViewModel(
+            observeShoppingList,
+            moveToInventory,
+            addToShoppingList,
+            removeFromShoppingList,
+        )
 
         viewModel.uiState.test {
             awaitLoaded()
@@ -143,7 +190,12 @@ class ShoppingListViewModelTest {
     fun `quick add defaults to other category`() = runTest {
         every { observeShoppingList(ObserveShoppingListParams) } returns flowOf(listOf(leche))
         coEvery { addToShoppingList(any()) } returns Unit
-        val viewModel = ShoppingListViewModel(observeShoppingList, moveToInventory, addToShoppingList)
+        val viewModel = ShoppingListViewModel(
+            observeShoppingList,
+            moveToInventory,
+            addToShoppingList,
+            removeFromShoppingList,
+        )
 
         viewModel.uiState.test {
             awaitLoaded()

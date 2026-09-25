@@ -34,6 +34,7 @@ val presentationModule = module {
             observeShoppingList = get(named("observeShoppingList")),
             moveToInventory = get(named("moveToInventory")),
             addToShoppingList = get(named("addToShoppingList")),
+            removeFromShoppingList = get(named("removeFromShoppingList")),
         )
     }
 }
