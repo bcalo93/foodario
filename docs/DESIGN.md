@@ -180,6 +180,7 @@ La metáfora "moderada" se concreta en estos componentes (todos en `core/present
   - Inventario vacío: *"Tu heladera está vacía… ¡empezá a anotar!"*
   - Compras vacía: *"Nada para comprar. Tachá todo ✓"*
 - **Sin texturas de papel ni espirales** (nivel moderado): la metáfora vive en tipografía, líneas y trazos, no en fondos pesados.
+- **Ícono de la app — "Nota en la heladera":** heladera dibujada a trazo de tinta con una nota adhesiva (highlight `#F3E3B2`) pegada con cinta y una tilde a mano, sobre fondo `paper`. Resume las dos metáforas del producto (heladera + libreta) en una sola imagen. La composición respeta la zona segura del adaptive icon (círculo de 66dp); existe variante light, dark y monocromática (themed icons). Fuentes editables en `docs/icon-concepts/` (`icon-final-*.svg`); assets generados en `androidApp/src/main/res/` y `iosApp/iosApp/Assets.xcassets/AppIcon.appiconset`.
 
 ---
 
@@ -246,3 +247,4 @@ core/presentation/
 | 4 | Dark mode "libreta nocturna" (papel oscuro cálido) | Gris estándar M3 / pizarra | La metáfora sobrevive al dark mode |
 | 5 | Fuentes empaquetadas (Caveat + Nunito, OFL) | Fuentes descargables en runtime | App offline-first (ARCHITECTURE §2) |
 | 6 | Detalles dibujados con `drawBehind`/`Canvas` | Assets de imagen | Cero peso de recursos, escalable a cualquier densidad |
+| 7 | Ícono "nota en la heladera" (§7) | Tilde sola / monograma "F" / cartón de leche | Es la única propuesta que fusiona dominio (heladera) e identidad (nota/libreta) |

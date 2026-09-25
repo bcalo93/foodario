@@ -1,7 +1,6 @@
 package com.foodario.core.presentation.components
 
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -12,7 +11,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,7 +26,6 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.foodario.core.presentation.theme.FoodarioTheme
@@ -172,94 +169,6 @@ private fun Modifier.repeatPress(onAction: () -> Unit): Modifier {
                 waitForUpOrCancellation()
                 held = false
             }
-        }
-    }
-}
-
-@Preview
-@Composable
-private fun QuantityStepperUnitLightPreview() {
-    FoodarioTheme(darkTheme = false) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(FoodarioTheme.colors.paper)
-                .padding(FoodarioTheme.dimensions.lg),
-        ) {
-            QuantityStepper(
-                quantity = 2.0,
-                unit = QuantityUnit.UNIT,
-                onIncrement = {},
-                onDecrement = {},
-                onQuantityClick = {},
-                onUnitClick = {},
-            )
-        }
-    }
-}
-
-@Preview
-@Composable
-private fun QuantityStepperUnitDarkPreview() {
-    FoodarioTheme(darkTheme = true) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(FoodarioTheme.colors.paper)
-                .padding(FoodarioTheme.dimensions.lg),
-        ) {
-            QuantityStepper(
-                quantity = 2.0,
-                unit = QuantityUnit.UNIT,
-                onIncrement = {},
-                onDecrement = {},
-                onQuantityClick = {},
-                onUnitClick = {},
-            )
-        }
-    }
-}
-
-@Preview
-@Composable
-private fun QuantityStepperGramsLightPreview() {
-    FoodarioTheme(darkTheme = false) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(FoodarioTheme.colors.paper)
-                .padding(FoodarioTheme.dimensions.lg),
-        ) {
-            QuantityStepper(
-                quantity = 300.0,
-                unit = QuantityUnit.GRAMS,
-                onIncrement = {},
-                onDecrement = {},
-                onQuantityClick = {},
-                onUnitClick = {},
-            )
-        }
-    }
-}
-
-@Preview
-@Composable
-private fun QuantityStepperGramsDarkPreview() {
-    FoodarioTheme(darkTheme = true) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(FoodarioTheme.colors.paper)
-                .padding(FoodarioTheme.dimensions.lg),
-        ) {
-            QuantityStepper(
-                quantity = 300.0,
-                unit = QuantityUnit.GRAMS,
-                onIncrement = {},
-                onDecrement = {},
-                onQuantityClick = {},
-                onUnitClick = {},
-            )
         }
     }
 }

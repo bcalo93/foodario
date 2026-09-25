@@ -153,18 +153,68 @@ class InventoryViewModelTest {
     }
 
     @Test
-    fun `increase quantity calls update quantity with one more`() = runTest {
+    fun `increase quantity uses the selected unit step`() = runTest {
         every { observeInventory(any()) } returns flowOf(listOf(leche))
         coEvery { updateQuantity(any()) } returns Unit
         val viewModel = viewModel()
 
         viewModel.uiState.test {
             awaitLoaded()
-            viewModel.onEvent(InventoryEvent.IncreaseQuantity(leche.id, leche.quantity))
+            viewModel.onEvent(
+                InventoryEvent.IncreaseQuantity(
+                    itemId = leche.id,
+                    currentQuantity = leche.quantity,
+                    unit = leche.unit,
+                )
+            )
             cancelAndIgnoreRemainingEvents()
         }
 
         coVerify { updateQuantity(UpdateQuantityParams(leche.id, 3.0)) }
+    }
+
+    @Test
+    fun `increase quantity uses grams step`() = runTest {
+        val cheese = leche.copy(quantity = 300.0, unit = QuantityUnit.GRAMS)
+        every { observeInventory(any()) } returns flowOf(listOf(cheese))
+        coEvery { updateQuantity(any()) } returns Unit
+        val viewModel = viewModel()
+
+        viewModel.uiState.test {
+            awaitLoaded()
+            viewModel.onEvent(
+                InventoryEvent.IncreaseQuantity(
+                    itemId = cheese.id,
+                    currentQuantity = cheese.quantity,
+                    unit = cheese.unit,
+                )
+            )
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        coVerify { updateQuantity(UpdateQuantityParams(cheese.id, 350.0)) }
+    }
+
+    @Test
+    fun `increase quantity uses decimal step for kilograms`() = runTest {
+        val meat = leche.copy(quantity = 1.0, unit = QuantityUnit.KILOGRAMS)
+        every { observeInventory(any()) } returns flowOf(listOf(meat))
+        coEvery { updateQuantity(any()) } returns Unit
+        val viewModel = viewModel()
+
+        viewModel.uiState.test {
+            awaitLoaded()
+            viewModel.onEvent(
+                InventoryEvent.IncreaseQuantity(
+                    itemId = meat.id,
+                    currentQuantity = meat.quantity,
+                    unit = meat.unit,
+                )
+            )
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        coVerify { updateQuantity(UpdateQuantityParams(meat.id, 1.1)) }
     }
 
     @Test

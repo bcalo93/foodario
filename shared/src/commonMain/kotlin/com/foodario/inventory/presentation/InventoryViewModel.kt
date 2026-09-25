@@ -6,6 +6,8 @@ import com.foodario.core.domain.usecase.ObserveUseCase
 import com.foodario.core.domain.usecase.UseCase
 import com.foodario.inventory.domain.model.FoodCategory
 import com.foodario.inventory.domain.model.FoodItem
+import com.foodario.inventory.domain.model.QuantityUnit
+import com.foodario.inventory.domain.model.snapToStep
 import com.foodario.inventory.domain.usecase.AddFoodItemParams
 import com.foodario.inventory.domain.usecase.DeleteFoodItemParams
 import com.foodario.inventory.domain.usecase.ObserveInventoryParams
@@ -30,7 +32,11 @@ sealed interface InventoryEvent {
     data class CategorySelected(val category: FoodCategory?) : InventoryEvent
     data class QuickAdd(val name: String) : InventoryEvent
     data class QuickAddCategorySelected(val category: FoodCategory) : InventoryEvent
-    data class IncreaseQuantity(val itemId: Long, val currentQuantity: Double) : InventoryEvent
+    data class IncreaseQuantity(
+        val itemId: Long,
+        val currentQuantity: Double,
+        val unit: QuantityUnit,
+    ) : InventoryEvent
     data class Delete(val itemId: Long) : InventoryEvent
 }
 
@@ -121,7 +127,10 @@ class InventoryViewModel(
                     updateQuantity(
                         UpdateQuantityParams(
                             itemId = event.itemId,
-                            newQuantity = event.currentQuantity + 1.0,
+                            newQuantity = snapToStep(
+                                event.currentQuantity + event.unit.step,
+                                event.unit.step,
+                            ),
                         )
                     )
                 }
