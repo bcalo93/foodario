@@ -1,4 +1,4 @@
-package com.foodario.inventory.presentation
+package com.foodario.inventory.presentation.uicomponents
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -33,14 +33,16 @@ import androidx.compose.ui.unit.sp
 import com.foodario.core.presentation.components.emoji
 import com.foodario.core.presentation.theme.FoodarioTheme
 import com.foodario.inventory.domain.model.FoodItem
+import com.foodario.inventory.presentation.InventoryEffect
 import kotlin.math.roundToInt
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
+import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
-fun AddItemFlightOverlay(
+internal fun AddItemFlightOverlay(
     flight: InventoryEffect.ItemAdded?,
     items: List<FoodItem>,
     listState: LazyListState,
@@ -71,7 +73,7 @@ fun AddItemFlightOverlay(
         val current = flight ?: return@LaunchedEffect
         val id = current.itemId
 
-        val index = withTimeoutOrNull(800) {
+        val index = withTimeoutOrNull(800.milliseconds) {
             snapshotFlow { currentItems.indexOfFirst { it.id == id } }
                 .first { it >= 0 }
         }

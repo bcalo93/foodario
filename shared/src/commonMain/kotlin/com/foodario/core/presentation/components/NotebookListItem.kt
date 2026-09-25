@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -21,7 +20,6 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.foodario.core.presentation.theme.FoodarioTheme
@@ -119,71 +117,5 @@ fun NotebookListItem(
             style = typography.quantityHand,
             color = colors.ink,
         )
-    }
-}
-
-@Preview
-@Composable
-private fun NotebookListItemLightPreview() {
-    FoodarioTheme(darkTheme = false) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(FoodarioTheme.colors.paper),
-        ) {
-            NotebookListItem(
-                name = "Leche",
-                category = FoodCategory.DAIRY,
-                quantity = 2.0,
-                unit = QuantityUnit.UNIT,
-                expiresInDays = 1,
-            )
-            NotebookListItem(
-                name = "Pechuga",
-                category = FoodCategory.MEAT,
-                quantity = 300.0,
-                unit = QuantityUnit.GRAMS,
-                isFrozen = true,
-            )
-            NotebookListItem(
-                name = "Manzanas",
-                category = FoodCategory.FRUITS,
-                quantity = 1.0,
-                unit = QuantityUnit.KILOGRAMS,
-            )
-        }
-    }
-}
-
-@Preview
-@Composable
-private fun NotebookListItemDarkPreview() {
-    FoodarioTheme(darkTheme = true) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(FoodarioTheme.colors.paper),
-        ) {
-            NotebookListItem(
-                name = "Leche",
-                category = FoodCategory.DAIRY,
-                quantity = 2.0,
-                unit = QuantityUnit.UNIT,
-                expiresInDays = 1,
-            )
-            NotebookListItem(
-                name = "Pechuga",
-                category = FoodCategory.MEAT,
-                quantity = 300.0,
-                unit = QuantityUnit.GRAMS,
-                isFrozen = true,
-            )
-            NotebookListItem(
-                name = "Manzanas",
-                category = FoodCategory.FRUITS,
-                quantity = 1.0,
-                unit = QuantityUnit.KILOGRAMS,
-            )
-        }
     }
 }
