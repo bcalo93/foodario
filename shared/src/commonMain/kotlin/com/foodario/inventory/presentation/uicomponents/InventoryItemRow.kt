@@ -23,6 +23,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.foodario.core.presentation.components.NotebookListItem
+import com.foodario.core.presentation.components.formatQuantity
 import com.foodario.core.presentation.theme.FoodarioTheme
 import com.foodario.inventory.domain.model.FoodItem
 import kotlin.math.roundToInt
@@ -72,7 +73,11 @@ internal fun InventoryItemRow(
                 },
             ) {
                 Text(
-                    text = if (offsetX < 0f) "Eliminar" else "+1",
+                    text = if (offsetX < 0f) {
+                        "Eliminar"
+                    } else {
+                        "+${formatQuantity(item.unit.step, item.unit)}"
+                    },
                     style = typography.labelHand,
                     color = if (offsetX < 0f) colors.marginRed else colors.penBlue,
                 )

@@ -170,6 +170,7 @@ internal fun InventoryContent(
                                         InventoryEvent.IncreaseQuantity(
                                             itemId = item.id,
                                             currentQuantity = item.quantity,
+                                            unit = item.unit,
                                         )
                                     )
                                 },
