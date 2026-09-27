@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -70,7 +71,9 @@ fun FoodarioNavHost(navController: NavHostController = rememberNavController()) 
         NavHost(
             navController = navController,
             startDestination = InventoryRoute,
-            modifier = Modifier.padding(innerPadding),
+            modifier = Modifier
+                .padding(innerPadding)
+                .consumeWindowInsets(innerPadding),
         ) {
             composable<InventoryRoute> {
                 InventoryScreen(onItemClick = { itemId -> navController.navigate(FoodDetailRoute(itemId)) })
