@@ -1,7 +1,6 @@
 package com.foodario.shoppinglist.presentation.uicomponents
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.MutableTransitionState
@@ -39,6 +38,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -78,16 +78,11 @@ internal fun ShoppingListItemRow(
     val swipeThreshold = with(density) { 64.dp.toPx() }
     var offsetX by remember(item.id) { mutableStateOf(0f) }
     val visibilityState = remember(item.id) { MutableTransitionState(true) }
-    val rowBackground by animateColorAsState(
-        targetValue = if (pending) colors.penBlue.copy(alpha = 0.06f) else colors.paper,
-        animationSpec = tween(durationMillis = 250),
-        label = "pendingTint",
-    )
-    val pendingProgress = remember { Animatable(0f) }
+    val pendingFill = remember { Animatable(0f) }
     LaunchedEffect(pending) {
         if (pending) {
-            pendingProgress.snapTo(0f)
-            pendingProgress.animateTo(
+            pendingFill.snapTo(0f)
+            pendingFill.animateTo(
                 targetValue = 1f,
                 animationSpec = tween(
                     durationMillis = CheckCommitDelayMs.toInt(),
@@ -95,9 +90,10 @@ internal fun ShoppingListItemRow(
                 ),
             )
         } else {
-            pendingProgress.animateTo(0f, animationSpec = tween(durationMillis = 200))
+            pendingFill.animateTo(0f, animationSpec = tween(durationMillis = 200))
         }
     }
+    val rowBackground = colors.paper
 
     LaunchedEffect(visibilityState) {
         snapshotFlow { visibilityState.isIdle && !visibilityState.currentState }
@@ -123,21 +119,7 @@ internal fun ShoppingListItemRow(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(rowBackground)
-                .drawBehind {
-                    val progress = pendingProgress.value
-                    if (progress > 0f) {
-                        val barHeight = 2.dp.toPx()
-                        val y = size.height - barHeight / 2f
-                        drawLine(
-                            color = colors.penBlue,
-                            start = Offset(0f, y),
-                            end = Offset(size.width * progress, y),
-                            strokeWidth = barHeight,
-                            cap = StrokeCap.Round,
-                        )
-                    }
-                },
+                .background(rowBackground),
         ) {
             if (offsetX != 0f) {
                 Row(
@@ -162,6 +144,16 @@ internal fun ShoppingListItemRow(
                     .fillMaxWidth()
                     .offset { IntOffset(offsetX.roundToInt(), 0) }
                     .background(rowBackground)
+                    .drawBehind {
+                        val progress = pendingFill.value
+                        if (progress > 0f) {
+                            drawRect(
+                                color = colors.penBlue.copy(alpha = 0.18f),
+                                topLeft = Offset.Zero,
+                                size = Size(size.width * progress, size.height),
+                            )
+                        }
+                    }
                     .semantics {
                         customActions = listOf(
                             CustomAccessibilityAction(label = "Eliminar ${item.name}") {
