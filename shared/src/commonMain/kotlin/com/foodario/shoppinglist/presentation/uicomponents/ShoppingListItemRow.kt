@@ -1,6 +1,8 @@
 package com.foodario.shoppinglist.presentation.uicomponents
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeOut
@@ -35,6 +37,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -54,6 +58,7 @@ import com.foodario.core.presentation.components.formatQuantity
 import com.foodario.core.presentation.theme.FoodarioTheme
 import com.foodario.inventory.domain.model.QuantityUnit
 import com.foodario.shoppinglist.domain.model.ShoppingItem
+import com.foodario.shoppinglist.presentation.CheckCommitDelayMs
 import com.foodario.shoppinglist.presentation.ShoppingListEvent
 import kotlin.math.roundToInt
 import kotlinx.coroutines.flow.first
@@ -62,7 +67,9 @@ import kotlinx.coroutines.flow.first
 internal fun ShoppingListItemRow(
     item: ShoppingItem,
     checked: Boolean,
+    pending: Boolean,
     onEvent: (ShoppingListEvent) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val colors = FoodarioTheme.colors
     val typography = FoodarioTheme.typography
@@ -71,6 +78,22 @@ internal fun ShoppingListItemRow(
     val swipeThreshold = with(density) { 64.dp.toPx() }
     var offsetX by remember(item.id) { mutableStateOf(0f) }
     val visibilityState = remember(item.id) { MutableTransitionState(true) }
+    val pendingFill = remember { Animatable(0f) }
+    LaunchedEffect(pending) {
+        if (pending) {
+            pendingFill.snapTo(0f)
+            pendingFill.animateTo(
+                targetValue = 1f,
+                animationSpec = tween(
+                    durationMillis = CheckCommitDelayMs.toInt(),
+                    easing = LinearEasing,
+                ),
+            )
+        } else {
+            pendingFill.animateTo(0f, animationSpec = tween(durationMillis = 200))
+        }
+    }
+    val rowBackground = colors.paper
 
     LaunchedEffect(visibilityState) {
         snapshotFlow { visibilityState.isIdle && !visibilityState.currentState }
@@ -86,6 +109,7 @@ internal fun ShoppingListItemRow(
     }
 
     AnimatedVisibility(
+        modifier = modifier,
         visibleState = visibilityState,
         exit = shrinkVertically(
             animationSpec = tween(durationMillis = 280),
@@ -95,7 +119,7 @@ internal fun ShoppingListItemRow(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(colors.paper),
+                .background(rowBackground),
         ) {
             if (offsetX != 0f) {
                 Row(
@@ -119,7 +143,17 @@ internal fun ShoppingListItemRow(
                 modifier = Modifier
                     .fillMaxWidth()
                     .offset { IntOffset(offsetX.roundToInt(), 0) }
-                    .background(colors.paper)
+                    .background(rowBackground)
+                    .drawBehind {
+                        val progress = pendingFill.value
+                        if (progress > 0f) {
+                            drawRect(
+                                color = colors.penBlue.copy(alpha = 0.18f),
+                                topLeft = Offset.Zero,
+                                size = Size(size.width * progress, size.height),
+                            )
+                        }
+                    }
                     .semantics {
                         customActions = listOf(
                             CustomAccessibilityAction(label = "Eliminar ${item.name}") {
