@@ -13,7 +13,7 @@ Rule of thumb: new code goes in `shared/`. `androidApp/` and `iosApp/` only host
 
 ## Toolchain & Gradle
 
-- AGP `9.0.1`, Kotlin `2.4.10`, Compose Multiplatform `1.11.1`, Koin `4.1.1`, SQLDelight `2.3.2` — all in `gradle/libs.versions.toml`.
+- Toolchain pins live in `gradle/libs.versions.toml` — consult it for the current major lines (Kotlin 2.x, AGP 9.x, Compose Multiplatform 1.x, Koin 4.x, SQLDelight 2.x, etc.) rather than trusting any prose version you see around.
 - JVM target `JVM_11` in both modules. CI builds with JDK 17; the daemon toolchain uses Azul JDK 21.
 - `gradle.properties` enables configuration cache and build cache. Avoid non-cache-safe Gradle code (no `Project` reads in tasks, etc.).
 - `appVersionName` and `appVersionCode` are required Gradle properties — defaults live in `gradle.properties`. The release workflow overrides them with `-PappVersionName=<v> -PappVersionCode=<code>`.

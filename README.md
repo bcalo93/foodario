@@ -31,16 +31,16 @@ The visual metaphor is a hand-written notebook — see [`docs/DESIGN.md`](./docs
 
 ## Tech stack
 
-Versions are pinned in [`gradle/libs.versions.toml`](./gradle/libs.versions.toml).
+Exact versions are pinned in [`gradle/libs.versions.toml`](./gradle/libs.versions.toml) — refer to it whenever a version decision comes up. The table below only lists the **major lines** so this section doesn't go stale on every bump.
 
-| Concern       | Tech                                                                             |
-|---------------|----------------------------------------------------------------------------------|
-| Multiplatform | Kotlin Multiplatform (Kotlin `2.4.10`, AGP `9.0.1`)                              |
-| UI            | Compose Multiplatform `1.11.1` (Material 3, Navigation Compose type-safe routes) |
-| Persistence   | SQLDelight `2.3.2` (Android + iOS native drivers)                                |
-| DI            | Koin `4.1.1` (named use cases, ViewModel DSL)                                    |
-| Async         | Kotlin Coroutines + Flow + `kotlinx-datetime`                                    |
-| Tests         | `kotlin.test` + MockK + Turbine + `kotlinx-coroutines-test`                      |
+| Concern       | Tech                                                                  |
+|---------------|-----------------------------------------------------------------------|
+| Multiplatform | Kotlin Multiplatform (Kotlin 2.x, AGP 9.x)                           |
+| UI            | Compose Multiplatform 1.x (Material 3, Navigation Compose type-safe) |
+| Persistence   | SQLDelight 2.x (Android + iOS native drivers)                        |
+| DI            | Koin 4.x (named use cases, ViewModel DSL)                           |
+| Async         | Kotlin Coroutines + Flow + `kotlinx-datetime`                        |
+| Tests         | `kotlin.test` + MockK + Turbine + `kotlinx-coroutines-test`          |
 
 Targets:
 
