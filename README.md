@@ -1,41 +1,165 @@
-This is a Kotlin Multiplatform project targeting Android, iOS.
+# Foodario
 
-* [/iosApp](./iosApp/iosApp) contains an iOS application. Even if you’re sharing your UI with Compose Multiplatform,
-  you need this entry point for your iOS app. This is also where you should add SwiftUI code for your project.
+> Offline-first "fridge/pantry" app — answers the one question that matters before you shop: **"Do I already have this at home?"**
 
-* [/shared](./shared/src) is for code that will be shared across your Compose Multiplatform applications.
-  It contains several subfolders:
-  - [commonMain](./shared/src/commonMain/kotlin) is for code that’s common for all targets.
-  - Other folders are for Kotlin code that will be compiled for only the platform indicated in the folder name.
-    For example, if you want to use Apple’s CoreCrypto for the iOS part of your Kotlin app,
-    the [iosMain](./shared/src/iosMain/kotlin) folder would be the right place for such calls.
-    Similarly, if you want to edit the Desktop (JVM) specific part, the [jvmMain](./shared/src/jvmMain/kotlin)
-    folder is the appropriate location.
+Foodario is a Kotlin Multiplatform app that keeps a small notebook of what you have at home and what you still need to buy. Everything lives on the device — no backend, no accounts.
 
-### Running the apps
+The whole product is shaped around three actions:
 
-Use the run configurations provided by the run widget in your IDE's toolbar. You can also use these commands and options:
+| Action                                    | What it does                                         |
+|-------------------------------------------|------------------------------------------------------|
+| **➕ Tengo** ("I have")                    | Add an item to the inventory                         |
+| **➖ Consumí** ("I used")                  | Reduce or remove a quantity from the inventory       |
+| **🛒 Necesito comprar** ("I need to buy") | Track the shopping list, separate from the inventory |
 
-- Android app: `./gradlew :androidApp:assembleDebug`
-- iOS app: open the [/iosApp](./iosApp) directory in Xcode and run it from there.
+The natural flow: `Shop → add to fridge → consume → inventory updates → when it runs out, move to the shopping list`.
 
-### Running tests
-
-Use the run button in your IDE's editor gutter, or run tests using Gradle tasks:
-
-- Android tests: `./gradlew :shared:testAndroidHostTest`
-- iOS tests: `./gradlew :shared:iosSimulatorArm64Test`
+The visual metaphor is a hand-written notebook — see [`docs/DESIGN.md`](./docs/DESIGN.md).
 
 ---
 
-## 📦 Release
+## Features
 
-See [`docs/RELEASE.md`](./docs/RELEASE.md) for the full release guide, including:
-
-- How to generate and configure the release keystore.
-- How to release from GitHub (tag push or web UI).
-- How to build, install, and test the signed APK on a local emulator or device.
+- **Quick add** — type a name, pick a category chip, hit `+`. Done. Defaults fill in the rest.
+- **Inventory list** — search, filter by category, sort alphabetically, with quantity steppers and freeze / expiration toggles.
+- **Item detail** — adjust quantity (long-press `+`/`−` to step continuously), switch category or unit, toggle frozen, set expiration.
+- **Shopping list** — hand-drawn checkboxes, "move to fridge" shortcut when you buy something.
+- **Offline-first** — everything is stored locally with SQLDelight. No network calls.
+- **Light & dark mode** — "classic notebook" / "night notebook" palettes (WCAG AA verified).
 
 ---
 
-Learn more about [Kotlin Multiplatform](https://www.jetbrains.com/help/kotlin-multiplatform-dev/get-started.html)…
+## Tech stack
+
+Versions are pinned in [`gradle/libs.versions.toml`](./gradle/libs.versions.toml).
+
+| Concern       | Tech                                                                             |
+|---------------|----------------------------------------------------------------------------------|
+| Multiplatform | Kotlin Multiplatform (Kotlin `2.4.10`, AGP `9.0.1`)                              |
+| UI            | Compose Multiplatform `1.11.1` (Material 3, Navigation Compose type-safe routes) |
+| Persistence   | SQLDelight `2.3.2` (Android + iOS native drivers)                                |
+| DI            | Koin `4.1.1` (named use cases, ViewModel DSL)                                    |
+| Async         | Kotlin Coroutines + Flow + `kotlinx-datetime`                                    |
+| Tests         | `kotlin.test` + MockK + Turbine + `kotlinx-coroutines-test`                      |
+
+Targets:
+
+- `commonMain` — shared UI, ViewModels, use cases, repositories, SQLDelight schema.
+- `androidMain` — Android `SqlDriver`, Android Koin bootstrap.
+- `iosMain` — native `SqlDriver`, iOS Koin bootstrap, `MainViewController()` Swift entry point.
+
+---
+
+## Project layout
+
+```
+foodario/
+├── androidApp/      Android shell — Application + Activity mount App()
+├── iosApp/          iOS shell — Xcode project + SwiftUI host
+├── shared/          All business logic, UI, persistence (Kotlin Multiplatform)
+│   └── src/
+│       ├── commonMain/       UI, ViewModels, use cases, repositories, .sq files
+│       ├── androidMain/      Android SqlDriver + Koin init
+│       ├── iosMain/          iOS SqlDriver + Koin init + MainViewController()
+│       ├── commonTest/       Pure-JVM tests
+│       ├── androidHostTest/  Android tests with sqlite in-memory driver
+│       └── iosTest/          iOS simulator tests
+├── docs/            ARCHITECTURE.md, DESIGN.md, RELEASE.md
+├── gradle/          Version catalog (libs.versions.toml) + Gradle wrapper
+└── AGENTS.md        Instructions for AI agents working in this repo
+```
+
+New code belongs in `shared/`. The `androidApp/` and `iosApp/` shells should stay thin.
+
+Each feature in `shared/src/commonMain/kotlin/com/foodario/` follows the same layout:
+
+```
+<feature>/
+├── data/                       repositories + SQLDelight mappers
+├── domain/
+│   ├── model/                 plain data classes / enums
+│   ├── repository/            repository interfaces
+│   └── usecase/               UseCase<P,R> / ObserveUseCase<P,R> implementations
+└── presentation/
+    ├── uicomponents/          sub-composables (dialogs, rows, overlays)
+    ├── *ViewModel.kt
+    ├── *UiState.kt
+    └── *Screen.kt
+```
+
+See [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) for the full layer rules.
+
+---
+
+## Build & run
+
+### Android
+
+```bash
+./gradlew :androidApp:assembleDebug
+```
+
+The debug APK is produced at `androidApp/build/outputs/apk/debug/`. Install it with `adb install -r <apk>` or run the `androidApp` configuration from Android Studio.
+
+### iOS
+
+```bash
+open iosApp/iosApp.xcodeproj
+```
+
+Xcode builds and runs the app on the simulator or device. Before the first iOS launch, set `TEAM_ID` in `iosApp/Configuration/Config.xcconfig` so the bundle id resolves correctly (`com.foodario.Foodario<TEAM_ID>`).
+
+### Required before building Android
+
+- `local.properties` at the repo root with `sdk.dir=<ANDROID_SDK_PATH>` (gitignored).
+- JDK 17 (CI uses Temurin). The local Gradle daemon uses Azul JDK 21 via the toolchain.
+
+---
+
+## Tests
+
+Run a focused test, not the whole suite:
+
+```bash
+./gradlew :shared:test                # pure-JVM commonTest
+./gradlew :shared:testAndroidHostTest # Android tests (MockK + in-memory sqlite driver)
+./gradlew :shared:iosSimulatorArm64Test # iOS simulator tests
+```
+
+Android tests assemble a Koin graph manually — use `shared/src/androidHostTest/.../KoinGraphTest.kt` as the template.
+
+CI runs `./gradlew :androidApp:check :shared:check` before assembling the release APK.
+
+There is **no** `lint`, `detekt`, `ktlint`, or `spotless` configuration. Verification is the default Gradle `check` task.
+
+---
+
+## Release
+
+The release pipeline is a GitHub Actions workflow triggered on a `vX.Y.Z` tag or a published GitHub Release. It runs the full check, builds a signed APK, and attaches it to the release.
+
+See [`docs/RELEASE.md`](./docs/RELEASE.md) for:
+
+- How to generate the release keystore (`foodario-release.jks`).
+- How to set the CI secrets (`KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`).
+- How to cut a release (push a `v*` tag or publish a GitHub Release).
+- How to install on an emulator and handle debug↔release signature mismatches.
+
+The version code is derived from the SemVer tag as `MAJOR * 10000 + MINOR * 100 + PATCH`, so each component must stay below 100.
+
+---
+
+## Documentation
+
+| File                                             | What's in it                                                                                    |
+|--------------------------------------------------|-------------------------------------------------------------------------------------------------|
+| [`AGENTS.md`](./AGENTS.md)                       | Guide for AI coding agents working in this repo (build, test, DI, SQLDelight, release gotchas). |
+| [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) | Architecture rules, layers, current stack, source-set layout.                                   |
+| [`docs/DESIGN.md`](./docs/DESIGN.md)             | Design system — typography, colors, components, layout.                                         |
+| [`docs/RELEASE.md`](./docs/RELEASE.md)           | Full release / signing / install guide.                                                         |
+
+---
+
+## License
+
+Personal project — no license declared. Add one if you intend to share the source.
