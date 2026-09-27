@@ -2,6 +2,8 @@ package com.foodario.shoppinglist.presentation.uicomponents
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeOut
@@ -36,6 +38,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -55,6 +58,7 @@ import com.foodario.core.presentation.components.formatQuantity
 import com.foodario.core.presentation.theme.FoodarioTheme
 import com.foodario.inventory.domain.model.QuantityUnit
 import com.foodario.shoppinglist.domain.model.ShoppingItem
+import com.foodario.shoppinglist.presentation.CheckCommitDelayMs
 import com.foodario.shoppinglist.presentation.ShoppingListEvent
 import kotlin.math.roundToInt
 import kotlinx.coroutines.flow.first
@@ -79,6 +83,21 @@ internal fun ShoppingListItemRow(
         animationSpec = tween(durationMillis = 250),
         label = "pendingTint",
     )
+    val pendingProgress = remember { Animatable(0f) }
+    LaunchedEffect(pending) {
+        if (pending) {
+            pendingProgress.snapTo(0f)
+            pendingProgress.animateTo(
+                targetValue = 1f,
+                animationSpec = tween(
+                    durationMillis = CheckCommitDelayMs.toInt(),
+                    easing = LinearEasing,
+                ),
+            )
+        } else {
+            pendingProgress.animateTo(0f, animationSpec = tween(durationMillis = 200))
+        }
+    }
 
     LaunchedEffect(visibilityState) {
         snapshotFlow { visibilityState.isIdle && !visibilityState.currentState }
@@ -104,7 +123,21 @@ internal fun ShoppingListItemRow(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(rowBackground),
+                .background(rowBackground)
+                .drawBehind {
+                    val progress = pendingProgress.value
+                    if (progress > 0f) {
+                        val barHeight = 2.dp.toPx()
+                        val y = size.height - barHeight / 2f
+                        drawLine(
+                            color = colors.penBlue,
+                            start = Offset(0f, y),
+                            end = Offset(size.width * progress, y),
+                            strokeWidth = barHeight,
+                            cap = StrokeCap.Round,
+                        )
+                    }
+                },
         ) {
             if (offsetX != 0f) {
                 Row(

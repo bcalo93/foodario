@@ -25,7 +25,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-private const val CheckCommitDelayMs = 1_500L
+internal const val CheckCommitDelayMs = 1_500L
 
 sealed interface ShoppingListEvent {
     data class ToggleChecked(val itemId: Long) : ShoppingListEvent
