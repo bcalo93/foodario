@@ -20,6 +20,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -28,6 +29,8 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ShoppingListViewModelTest {
@@ -42,6 +45,15 @@ class ShoppingListViewModelTest {
         name = "Leche",
         category = FoodCategory.DAIRY,
         quantity = 2.0,
+        unit = QuantityUnit.UNIT,
+        createdAt = Instant.fromEpochMilliseconds(1_700_000_000_000L),
+    )
+
+    private val pan = ShoppingItem(
+        id = 2L,
+        name = "Pan",
+        category = FoodCategory.OTHER,
+        quantity = 1.0,
         unit = QuantityUnit.UNIT,
         createdAt = Instant.fromEpochMilliseconds(1_700_000_000_000L),
     )
@@ -68,59 +80,114 @@ class ShoppingListViewModelTest {
         Dispatchers.resetMain()
     }
 
+    private fun newViewModel(): ShoppingListViewModel = ShoppingListViewModel(
+        observeShoppingList,
+        moveToInventory,
+        addToShoppingList,
+        removeFromShoppingList,
+    )
+
     @Test
     fun `emits items when observing`() = runTest {
         every { observeShoppingList(ObserveShoppingListParams) } returns flowOf(listOf(leche))
-        val viewModel = ShoppingListViewModel(
-            observeShoppingList,
-            moveToInventory,
-            addToShoppingList,
-            removeFromShoppingList,
-        )
+        val viewModel = newViewModel()
 
         viewModel.uiState.test {
             val loaded = awaitLoaded()
             assertEquals(listOf(leche), loaded.items)
+            assertEquals(emptySet(), loaded.pendingIds)
+            assertEquals(emptySet(), loaded.checkedIds)
+            assertFalse(loaded.showCheckedSection)
             cancelAndIgnoreRemainingEvents()
         }
     }
 
     @Test
-    fun `toggle checked adds id to checkedIds`() = runTest {
+    fun `toggle checked adds id to pendingIds without delay`() = runTest {
         every { observeShoppingList(ObserveShoppingListParams) } returns flowOf(listOf(leche))
-        val viewModel = ShoppingListViewModel(
-            observeShoppingList,
-            moveToInventory,
-            addToShoppingList,
-            removeFromShoppingList,
-        )
+        val viewModel = newViewModel()
 
         viewModel.uiState.test {
             awaitLoaded()
             viewModel.onEvent(ShoppingListEvent.ToggleChecked(1L))
             val state = awaitItem()
+            assertEquals(setOf(1L), state.pendingIds)
+            assertEquals(emptySet(), state.checkedIds)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `pending id commits to checkedIds after delay`() = runTest {
+        every { observeShoppingList(ObserveShoppingListParams) } returns flowOf(listOf(leche))
+        val viewModel = newViewModel()
+
+        viewModel.uiState.test {
+            awaitLoaded()
+            viewModel.onEvent(ShoppingListEvent.ToggleChecked(1L))
+            awaitItem()
+            advanceTimeBy(1_500)
+            val state = awaitItem()
+            assertEquals(emptySet(), state.pendingIds)
             assertEquals(setOf(1L), state.checkedIds)
             cancelAndIgnoreRemainingEvents()
         }
     }
 
     @Test
-    fun `toggle checked twice removes id from checkedIds`() = runTest {
+    fun `toggling a pending id during the delay cancels the commit`() = runTest {
         every { observeShoppingList(ObserveShoppingListParams) } returns flowOf(listOf(leche))
-        val viewModel = ShoppingListViewModel(
-            observeShoppingList,
-            moveToInventory,
-            addToShoppingList,
-            removeFromShoppingList,
-        )
+        val viewModel = newViewModel()
+
+        viewModel.uiState.test {
+            awaitLoaded()
+            viewModel.onEvent(ShoppingListEvent.ToggleChecked(1L))
+            val pendingState = awaitItem()
+            assertEquals(setOf(1L), pendingState.pendingIds)
+            viewModel.onEvent(ShoppingListEvent.ToggleChecked(1L))
+            val clearedState = awaitItem()
+            assertEquals(emptySet(), clearedState.pendingIds)
+            assertEquals(emptySet(), clearedState.checkedIds)
+            advanceTimeBy(2_000)
+            expectNoEvents()
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `unchecking from checked is immediate and skips the delay`() = runTest {
+        every { observeShoppingList(ObserveShoppingListParams) } returns flowOf(listOf(leche))
+        val viewModel = newViewModel()
 
         viewModel.uiState.test {
             awaitLoaded()
             viewModel.onEvent(ShoppingListEvent.ToggleChecked(1L))
             awaitItem()
+            advanceTimeBy(1_500)
+            val committedState = awaitItem()
+            assertEquals(setOf(1L), committedState.checkedIds)
             viewModel.onEvent(ShoppingListEvent.ToggleChecked(1L))
-            val state = awaitItem()
-            assertEquals(emptySet(), state.checkedIds)
+            val uncheckedState = awaitItem()
+            assertEquals(emptySet(), uncheckedState.checkedIds)
+            assertEquals(emptySet(), uncheckedState.pendingIds)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `toggle checked section flips showCheckedSection`() = runTest {
+        every { observeShoppingList(ObserveShoppingListParams) } returns flowOf(listOf(leche))
+        val viewModel = newViewModel()
+
+        viewModel.uiState.test {
+            val initial = awaitLoaded()
+            assertFalse(initial.showCheckedSection)
+            viewModel.onEvent(ShoppingListEvent.ToggleCheckedSection)
+            val expanded = awaitItem()
+            assertTrue(expanded.showCheckedSection)
+            viewModel.onEvent(ShoppingListEvent.ToggleCheckedSection)
+            val collapsed = awaitItem()
+            assertFalse(collapsed.showCheckedSection)
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -129,12 +196,7 @@ class ShoppingListViewModelTest {
     fun `move to inventory calls move use case`() = runTest {
         every { observeShoppingList(ObserveShoppingListParams) } returns flowOf(listOf(leche))
         coEvery { moveToInventory(any()) } returns foodItem
-        val viewModel = ShoppingListViewModel(
-            observeShoppingList,
-            moveToInventory,
-            addToShoppingList,
-            removeFromShoppingList,
-        )
+        val viewModel = newViewModel()
 
         viewModel.uiState.test {
             awaitLoaded()
@@ -146,19 +208,25 @@ class ShoppingListViewModelTest {
     }
 
     @Test
-    fun `remove from shopping list calls remove use case`() = runTest {
-        every { observeShoppingList(ObserveShoppingListParams) } returns flowOf(listOf(leche))
+    fun `remove from shopping list clears any pending or checked state`() = runTest {
+        every { observeShoppingList(ObserveShoppingListParams) } returns flowOf(listOf(leche, pan))
         coEvery { removeFromShoppingList(any()) } returns Unit
-        val viewModel = ShoppingListViewModel(
-            observeShoppingList,
-            moveToInventory,
-            addToShoppingList,
-            removeFromShoppingList,
-        )
+        val viewModel = newViewModel()
 
         viewModel.uiState.test {
             awaitLoaded()
+            viewModel.onEvent(ShoppingListEvent.ToggleChecked(1L))
+            awaitItem()
+            advanceTimeBy(1_500)
+            val committed = awaitItem()
+            assertEquals(setOf(1L), committed.checkedIds)
+            viewModel.onEvent(ShoppingListEvent.ToggleChecked(2L))
+            val pending = awaitItem()
+            assertEquals(setOf(2L), pending.pendingIds)
             viewModel.onEvent(ShoppingListEvent.RemoveFromShoppingList(1L))
+            val afterRemove = awaitItem()
+            assertEquals(emptySet(), afterRemove.checkedIds)
+            assertEquals(setOf(2L), afterRemove.pendingIds)
             cancelAndIgnoreRemainingEvents()
         }
 
@@ -169,12 +237,7 @@ class ShoppingListViewModelTest {
     fun `quick add calls add use case with selected category`() = runTest {
         every { observeShoppingList(ObserveShoppingListParams) } returns flowOf(listOf(leche))
         coEvery { addToShoppingList(any()) } returns Unit
-        val viewModel = ShoppingListViewModel(
-            observeShoppingList,
-            moveToInventory,
-            addToShoppingList,
-            removeFromShoppingList,
-        )
+        val viewModel = newViewModel()
 
         viewModel.uiState.test {
             awaitLoaded()
@@ -190,12 +253,7 @@ class ShoppingListViewModelTest {
     fun `quick add defaults to other category`() = runTest {
         every { observeShoppingList(ObserveShoppingListParams) } returns flowOf(listOf(leche))
         coEvery { addToShoppingList(any()) } returns Unit
-        val viewModel = ShoppingListViewModel(
-            observeShoppingList,
-            moveToInventory,
-            addToShoppingList,
-            removeFromShoppingList,
-        )
+        val viewModel = newViewModel()
 
         viewModel.uiState.test {
             awaitLoaded()

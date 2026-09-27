@@ -1,6 +1,7 @@
 package com.foodario.shoppinglist.presentation.uicomponents
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeOut
@@ -62,7 +63,9 @@ import kotlinx.coroutines.flow.first
 internal fun ShoppingListItemRow(
     item: ShoppingItem,
     checked: Boolean,
+    pending: Boolean,
     onEvent: (ShoppingListEvent) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val colors = FoodarioTheme.colors
     val typography = FoodarioTheme.typography
@@ -71,6 +74,11 @@ internal fun ShoppingListItemRow(
     val swipeThreshold = with(density) { 64.dp.toPx() }
     var offsetX by remember(item.id) { mutableStateOf(0f) }
     val visibilityState = remember(item.id) { MutableTransitionState(true) }
+    val rowBackground by animateColorAsState(
+        targetValue = if (pending) colors.penBlue.copy(alpha = 0.06f) else colors.paper,
+        animationSpec = tween(durationMillis = 250),
+        label = "pendingTint",
+    )
 
     LaunchedEffect(visibilityState) {
         snapshotFlow { visibilityState.isIdle && !visibilityState.currentState }
@@ -86,6 +94,7 @@ internal fun ShoppingListItemRow(
     }
 
     AnimatedVisibility(
+        modifier = modifier,
         visibleState = visibilityState,
         exit = shrinkVertically(
             animationSpec = tween(durationMillis = 280),
@@ -95,7 +104,7 @@ internal fun ShoppingListItemRow(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(colors.paper),
+                .background(rowBackground),
         ) {
             if (offsetX != 0f) {
                 Row(
@@ -119,7 +128,7 @@ internal fun ShoppingListItemRow(
                 modifier = Modifier
                     .fillMaxWidth()
                     .offset { IntOffset(offsetX.roundToInt(), 0) }
-                    .background(colors.paper)
+                    .background(rowBackground)
                     .semantics {
                         customActions = listOf(
                             CustomAccessibilityAction(label = "Eliminar ${item.name}") {
