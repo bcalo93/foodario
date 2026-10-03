@@ -19,6 +19,12 @@ internal fun snapToStep(quantity: Double, step: Double): Double {
     return ((snapped * 1000.0).roundToInt() / 1000.0).coerceAtLeast(0.0)
 }
 
+internal fun stepDecreaseQuantity(quantity: Double, unit: QuantityUnit): Double =
+    snapToStep((quantity - unit.step).coerceAtLeast(0.0), unit.step)
+
+internal fun canDecreaseStep(quantity: Double, unit: QuantityUnit): Boolean =
+    stepDecreaseQuantity(quantity, unit) > 0.0
+
 internal fun formatQuantityNumber(quantity: Double): String {
     val normalized = (quantity * 1000.0).roundToInt() / 1000.0
     return if (normalized % 1.0 == 0.0) {
