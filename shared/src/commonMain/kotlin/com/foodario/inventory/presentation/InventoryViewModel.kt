@@ -8,6 +8,7 @@ import com.foodario.inventory.domain.model.FoodCategory
 import com.foodario.inventory.domain.model.FoodItem
 import com.foodario.inventory.domain.model.QuantityUnit
 import com.foodario.inventory.domain.model.snapToStep
+import com.foodario.inventory.domain.model.stepDecreaseQuantity
 import com.foodario.inventory.domain.usecase.AddFoodItemParams
 import com.foodario.inventory.domain.usecase.DeleteFoodItemParams
 import com.foodario.inventory.domain.usecase.ObserveInventoryParams
@@ -33,6 +34,11 @@ sealed interface InventoryEvent {
     data class QuickAdd(val name: String) : InventoryEvent
     data class QuickAddCategorySelected(val category: FoodCategory) : InventoryEvent
     data class IncreaseQuantity(
+        val itemId: Long,
+        val currentQuantity: Double,
+        val unit: QuantityUnit,
+    ) : InventoryEvent
+    data class DecreaseQuantity(
         val itemId: Long,
         val currentQuantity: Double,
         val unit: QuantityUnit,
@@ -133,6 +139,19 @@ class InventoryViewModel(
                             ),
                         )
                     )
+                }
+            }
+            is InventoryEvent.DecreaseQuantity -> viewModelScope.launch {
+                val newQuantity = stepDecreaseQuantity(event.currentQuantity, event.unit)
+                if (newQuantity > 0.0) {
+                    runCatching {
+                        updateQuantity(
+                            UpdateQuantityParams(
+                                itemId = event.itemId,
+                                newQuantity = newQuantity,
+                            )
+                        )
+                    }
                 }
             }
             is InventoryEvent.Delete -> viewModelScope.launch {

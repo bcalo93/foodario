@@ -26,6 +26,7 @@ import com.foodario.core.presentation.components.NotebookListItem
 import com.foodario.core.presentation.components.formatQuantity
 import com.foodario.core.presentation.theme.FoodarioTheme
 import com.foodario.inventory.domain.model.FoodItem
+import com.foodario.inventory.domain.model.canDecreaseStep
 import kotlin.math.roundToInt
 
 @Composable
@@ -33,6 +34,7 @@ internal fun InventoryItemRow(
     item: FoodItem,
     onClick: () -> Unit,
     onIncreaseQuantity: () -> Unit,
+    onDecreaseQuantity: () -> Unit,
     onDelete: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -42,6 +44,8 @@ internal fun InventoryItemRow(
     val actionWidth = with(density) { 96.dp.toPx() }
     val swipeThreshold = with(density) { 64.dp.toPx() }
     var offsetX by remember(item.id) { mutableStateOf(0f) }
+    val canDecrease = canDecreaseStep(item.quantity, item.unit)
+    val isDeleteAction = offsetX < 0f && !canDecrease
 
     Box(
         modifier = modifier
@@ -53,16 +57,20 @@ internal fun InventoryItemRow(
                 modifier = Modifier
                     .matchParentSize()
                     .background(
-                        if (offsetX < 0f) {
+                        if (isDeleteAction) {
                             colors.marginRed.copy(alpha = 0.12f)
                         } else {
                             colors.penBlue.copy(alpha = 0.12f)
                         }
                     )
                     .clickable {
-                        val isDeleteAction = offsetX < 0f
+                        val isLeftAction = offsetX < 0f
                         offsetX = 0f
-                        if (isDeleteAction) onDelete() else onIncreaseQuantity()
+                        when {
+                            !isLeftAction -> onIncreaseQuantity()
+                            canDecrease -> onDecreaseQuantity()
+                            else -> onDelete()
+                        }
                     }
                     .padding(horizontal = FoodarioTheme.dimensions.xl),
                 verticalAlignment = Alignment.CenterVertically,
@@ -73,13 +81,13 @@ internal fun InventoryItemRow(
                 },
             ) {
                 Text(
-                    text = if (offsetX < 0f) {
-                        "Eliminar"
-                    } else {
-                        "+${formatQuantity(item.unit.step, item.unit)}"
+                    text = when {
+                        offsetX >= 0f -> "+${formatQuantity(item.unit.step, item.unit)}"
+                        canDecrease -> "−${formatQuantity(item.unit.step, item.unit)}"
+                        else -> "Eliminar"
                     },
                     style = typography.labelHand,
-                    color = if (offsetX < 0f) colors.marginRed else colors.penBlue,
+                    color = if (isDeleteAction) colors.marginRed else colors.penBlue,
                 )
             }
         }
@@ -101,14 +109,21 @@ internal fun InventoryItemRow(
                     orientation = Orientation.Horizontal,
                     onDragStopped = {
                         val swipe = offsetX
-                        if (swipe >= actionWidth) {
-                            offsetX = 0f
-                            onIncreaseQuantity()
-                        } else {
-                            offsetX = when {
-                                swipe <= -swipeThreshold -> -actionWidth
-                                swipe >= swipeThreshold -> actionWidth
-                                else -> 0f
+                        when {
+                            swipe >= actionWidth -> {
+                                offsetX = 0f
+                                onIncreaseQuantity()
+                            }
+                            swipe <= -actionWidth && canDecrease -> {
+                                offsetX = 0f
+                                onDecreaseQuantity()
+                            }
+                            else -> {
+                                offsetX = when {
+                                    swipe <= -swipeThreshold -> -actionWidth
+                                    swipe >= swipeThreshold -> actionWidth
+                                    else -> 0f
+                                }
                             }
                         }
                     },
