@@ -2,6 +2,7 @@ package com.foodario.di
 
 import com.foodario.database.DatabaseDriverFactory
 import com.foodario.core.domain.usecase.ObserveUseCase
+import com.foodario.core.domain.usecase.UseCase
 import com.foodario.inventory.domain.model.FoodCategory
 import com.foodario.inventory.domain.model.FoodItem
 import com.foodario.inventory.domain.model.QuantityUnit
@@ -16,6 +17,8 @@ import com.foodario.shoppinglist.domain.model.ShoppingItem
 import com.foodario.shoppinglist.domain.repository.ShoppingListRepository
 import com.foodario.shoppinglist.domain.usecase.ObserveShoppingListParams
 import com.foodario.shoppinglist.domain.usecase.ObserveShoppingListUseCase
+import com.foodario.shoppinglist.domain.usecase.UpdateShoppingItemQuantityParams
+import com.foodario.shoppinglist.domain.usecase.UpdateShoppingItemQuantityUseCase
 import com.foodario.shoppinglist.presentation.ShoppingListViewModel
 import io.mockk.every
 import io.mockk.mockk
@@ -109,6 +112,9 @@ class KoinGraphTest {
         )
         assertIs<ObserveShoppingListUseCase>(
             koin.get<ObserveUseCase<ObserveShoppingListParams, List<ShoppingItem>>>(named("observeShoppingList")),
+        )
+        assertIs<UpdateShoppingItemQuantityUseCase>(
+            koin.get<UseCase<UpdateShoppingItemQuantityParams, Unit>>(named("updateShoppingItemQuantity")),
         )
 
         val inventoryState = koin.get<InventoryViewModel>().uiState.first { !it.isLoading }

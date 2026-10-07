@@ -17,5 +17,8 @@ insert:
 INSERT INTO shopping_item(name, category, quantity, unit, created_at)
 VALUES (:name, :category, :quantity, :unit, :createdAt);
 
+updateQuantity:
+UPDATE shopping_item SET quantity = :quantity, unit = :unit WHERE id = :id;
+
 delete:
 DELETE FROM shopping_item WHERE id = :id;

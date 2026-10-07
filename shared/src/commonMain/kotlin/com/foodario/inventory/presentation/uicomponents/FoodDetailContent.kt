@@ -35,7 +35,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.foodario.core.presentation.components.DoodleDivider
 import com.foodario.core.presentation.components.HandDrawnCheckbox
+import com.foodario.core.presentation.components.QuantityEditDialog
 import com.foodario.core.presentation.components.QuantityStepper
+import com.foodario.core.presentation.components.UnitSelectionDialog
 import com.foodario.core.presentation.components.emoji
 import com.foodario.core.presentation.components.notebookMargin
 import com.foodario.core.presentation.theme.FoodarioTheme

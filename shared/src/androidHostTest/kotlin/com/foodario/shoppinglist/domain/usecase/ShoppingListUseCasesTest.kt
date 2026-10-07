@@ -75,6 +75,30 @@ class ShoppingListUseCasesTest {
     }
 
     @Test
+    fun `updateShoppingItemQuantity delegates to repository`() = runTest {
+        val repository = mockk<ShoppingListRepository>()
+        coEvery { repository.updateQuantity(any(), any(), any()) } returns Unit
+        val useCase = UpdateShoppingItemQuantityUseCase(repository)
+
+        useCase(UpdateShoppingItemQuantityParams(itemId = 1L, quantity = 2.5, unit = QuantityUnit.KILOGRAMS))
+
+        coVerify { repository.updateQuantity(id = 1L, quantity = 2.5, unit = QuantityUnit.KILOGRAMS) }
+    }
+
+    @Test
+    fun `updateShoppingItemQuantity rejects non positive quantity`() = runTest {
+        val repository = mockk<ShoppingListRepository>()
+        val useCase = UpdateShoppingItemQuantityUseCase(repository)
+
+        val error = catchError {
+            useCase(UpdateShoppingItemQuantityParams(itemId = 1L, quantity = 0.0, unit = QuantityUnit.UNIT))
+        }
+
+        assertIs<IllegalArgumentException>(error)
+        coVerify(exactly = 0) { repository.updateQuantity(any(), any(), any()) }
+    }
+
+    @Test
     fun `moveToInventory adds to inventory and removes from shopping list`() = runTest {
         val shoppingListRepository = mockk<ShoppingListRepository>()
         val inventoryRepository = mockk<InventoryRepository>()

@@ -3,6 +3,7 @@ package com.foodario.shoppinglist.data
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
 import com.foodario.database.ShoppingItemQueries
+import com.foodario.inventory.domain.model.QuantityUnit
 import com.foodario.shoppinglist.domain.model.ShoppingItem
 import com.foodario.shoppinglist.domain.repository.ShoppingListRepository
 import kotlinx.coroutines.CoroutineDispatcher
@@ -33,6 +34,16 @@ class ShoppingListRepositoryImpl(
     override suspend fun remove(id: Long) {
         withContext(ioDispatcher) {
             queries.delete(id = id)
+        }
+    }
+
+    override suspend fun updateQuantity(id: Long, quantity: Double, unit: QuantityUnit) {
+        withContext(ioDispatcher) {
+            queries.updateQuantity(
+                quantity = quantity,
+                unit = unit.name,
+                id = id,
+            )
         }
     }
 

@@ -63,4 +63,30 @@ class ShoppingListRepositoryImplTest {
         assertEquals("Pan", result?.name)
         assertEquals(FoodCategory.PANTRY, result?.category)
     }
+
+    @Test
+    fun `updateQuantity persists quantity and unit`() = runTest {
+        val repository = inMemoryRepository()
+        repository.add(shoppingItem("Harina"))
+        val added = repository.observeShoppingList().first().first()
+
+        repository.updateQuantity(added.id, 2.5, QuantityUnit.KILOGRAMS)
+
+        val updated = repository.getById(added.id)
+        assertEquals(2.5, updated?.quantity)
+        assertEquals(QuantityUnit.KILOGRAMS, updated?.unit)
+    }
+
+    @Test
+    fun `updateQuantity is reflected by observeShoppingList`() = runTest {
+        val repository = inMemoryRepository()
+        repository.add(shoppingItem("Arroz"))
+        val added = repository.observeShoppingList().first().first()
+
+        repository.updateQuantity(added.id, 3.0, QuantityUnit.GRAMS)
+
+        val items = repository.observeShoppingList().first()
+        assertEquals(3.0, items.single().quantity)
+        assertEquals(QuantityUnit.GRAMS, items.single().unit)
+    }
 }
