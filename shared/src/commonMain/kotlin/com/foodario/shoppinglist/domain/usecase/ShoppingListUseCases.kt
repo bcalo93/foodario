@@ -34,6 +34,25 @@ class AddToShoppingListUseCase(
     }
 }
 
+data class UpdateShoppingItemQuantityParams(
+    val itemId: Long,
+    val quantity: Double,
+    val unit: QuantityUnit,
+)
+
+class UpdateShoppingItemQuantityUseCase(
+    private val repository: ShoppingListRepository,
+) : UseCase<UpdateShoppingItemQuantityParams, Unit> {
+    override suspend fun invoke(params: UpdateShoppingItemQuantityParams) {
+        require(params.quantity > 0.0) { "La cantidad debe ser mayor a 0" }
+        repository.updateQuantity(
+            id = params.itemId,
+            quantity = params.quantity,
+            unit = params.unit,
+        )
+    }
+}
+
 data class RemoveFromShoppingListParams(
     val itemId: Long,
 )

@@ -66,6 +66,7 @@ private fun ShoppingListScreenLightPreview() {
                 observeShoppingList = previewObserveUseCase(sampleShoppingList()),
                 moveToInventory = fakeMoveToInventoryUseCase(),
                 addToShoppingList = fakeAddToShoppingListUseCase(),
+                updateShoppingItemQuantity = previewUnitUseCase(),
                 removeFromShoppingList = previewUnitUseCase(),
             ),
         )
@@ -81,6 +82,7 @@ private fun ShoppingListScreenDarkPreview() {
                 observeShoppingList = previewObserveUseCase(sampleShoppingList()),
                 moveToInventory = fakeMoveToInventoryUseCase(),
                 addToShoppingList = fakeAddToShoppingListUseCase(),
+                updateShoppingItemQuantity = previewUnitUseCase(),
                 removeFromShoppingList = previewUnitUseCase(),
             ),
         )

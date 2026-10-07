@@ -6,11 +6,13 @@ import com.foodario.core.domain.usecase.ObserveUseCase
 import com.foodario.core.domain.usecase.UseCase
 import com.foodario.inventory.domain.model.FoodCategory
 import com.foodario.inventory.domain.model.FoodItem
+import com.foodario.inventory.domain.model.QuantityUnit
 import com.foodario.shoppinglist.domain.model.ShoppingItem
 import com.foodario.shoppinglist.domain.usecase.AddToShoppingListParams
 import com.foodario.shoppinglist.domain.usecase.MoveToInventoryParams
 import com.foodario.shoppinglist.domain.usecase.ObserveShoppingListParams
 import com.foodario.shoppinglist.domain.usecase.RemoveFromShoppingListParams
+import com.foodario.shoppinglist.domain.usecase.UpdateShoppingItemQuantityParams
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,6 +32,7 @@ internal const val CheckCommitDelayMs = 1_500L
 sealed interface ShoppingListEvent {
     data class ToggleChecked(val itemId: Long) : ShoppingListEvent
     data object ToggleCheckedSection : ShoppingListEvent
+    data class SetQuantity(val itemId: Long, val quantity: Double, val unit: QuantityUnit) : ShoppingListEvent
     data class MoveToInventory(val itemId: Long) : ShoppingListEvent
     data class RemoveFromShoppingList(val itemId: Long) : ShoppingListEvent
     data class QuickAdd(val name: String) : ShoppingListEvent
@@ -40,6 +43,7 @@ class ShoppingListViewModel(
     private val observeShoppingList: ObserveUseCase<ObserveShoppingListParams, List<ShoppingItem>>,
     private val moveToInventory: UseCase<MoveToInventoryParams, FoodItem>,
     private val addToShoppingList: UseCase<AddToShoppingListParams, Unit>,
+    private val updateShoppingItemQuantity: UseCase<UpdateShoppingItemQuantityParams, Unit>,
     private val removeFromShoppingList: UseCase<RemoveFromShoppingListParams, Unit>,
 ) : ViewModel() {
 
@@ -75,6 +79,17 @@ class ShoppingListViewModel(
         when (event) {
             is ShoppingListEvent.ToggleChecked -> toggleChecked(event.itemId)
             ShoppingListEvent.ToggleCheckedSection -> showCheckedSection.update { !it }
+            is ShoppingListEvent.SetQuantity -> viewModelScope.launch {
+                runCatching {
+                    updateShoppingItemQuantity(
+                        UpdateShoppingItemQuantityParams(
+                            itemId = event.itemId,
+                            quantity = event.quantity,
+                            unit = event.unit,
+                        )
+                    )
+                }
+            }
             is ShoppingListEvent.MoveToInventory -> viewModelScope.launch {
                 runCatching { moveToInventory(MoveToInventoryParams(event.itemId)) }
             }

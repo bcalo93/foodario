@@ -53,6 +53,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.foodario.core.presentation.components.FridgeIllustration
 import com.foodario.core.presentation.components.HandDrawnCheckbox
+import com.foodario.core.presentation.components.QuantityEditDialog
+import com.foodario.core.presentation.components.UnitSelectionDialog
 import com.foodario.core.presentation.components.emoji
 import com.foodario.core.presentation.components.formatQuantity
 import com.foodario.core.presentation.theme.FoodarioTheme
@@ -77,6 +79,9 @@ internal fun ShoppingListItemRow(
     val actionWidth = with(density) { 96.dp.toPx() }
     val swipeThreshold = with(density) { 64.dp.toPx() }
     var offsetX by remember(item.id) { mutableStateOf(0f) }
+    var showQuantityDialog by remember(item.id) { mutableStateOf(false) }
+    var showUnitDialog by remember(item.id) { mutableStateOf(false) }
+    var selectedUnit by remember(item.id) { mutableStateOf(item.unit ?: QuantityUnit.UNIT) }
     val visibilityState = remember(item.id) { MutableTransitionState(true) }
     val pendingFill = remember { Animatable(0f) }
     LaunchedEffect(pending) {
@@ -199,14 +204,34 @@ internal fun ShoppingListItemRow(
                                 color = colors.inkSoft,
                             )
                         }
-                        if (item.quantity != null) {
-                            Spacer(Modifier.width(FoodarioTheme.dimensions.sm))
-                            Text(
-                                text = formatQuantity(item.quantity, item.unit ?: QuantityUnit.UNIT),
-                                style = typography.caption,
-                                color = colors.inkSoft,
-                            )
+                        Spacer(Modifier.width(FoodarioTheme.dimensions.sm))
+                        val quantityText = if (item.quantity != null) {
+                            formatQuantity(item.quantity, item.unit ?: QuantityUnit.UNIT)
+                        } else {
+                            "Definir cantidad"
                         }
+                        val quantityDescription = if (item.quantity != null) {
+                            "Cambiar cantidad de ${item.name}"
+                        } else {
+                            "Definir cantidad de ${item.name}"
+                        }
+                        Text(
+                            text = quantityText,
+                            style = typography.caption,
+                            color = colors.inkSoft,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(4.dp))
+                                .clickable(
+                                    role = Role.Button,
+                                    onClickLabel = quantityDescription,
+                                    onClick = {
+                                        selectedUnit = item.unit ?: QuantityUnit.UNIT
+                                        showQuantityDialog = true
+                                    },
+                                )
+                                .semantics { contentDescription = quantityDescription }
+                                .padding(horizontal = FoodarioTheme.dimensions.xs),
+                        )
                     }
                 }
                 Spacer(Modifier.width(FoodarioTheme.dimensions.sm))
@@ -216,6 +241,31 @@ internal fun ShoppingListItemRow(
                 )
             }
         }
+    }
+
+    if (showQuantityDialog) {
+        QuantityEditDialog(
+            quantity = item.quantity ?: 1.0,
+            unit = selectedUnit,
+            allowZero = false,
+            onDismiss = { showQuantityDialog = false },
+            onConfirm = { value ->
+                showQuantityDialog = false
+                onEvent(ShoppingListEvent.SetQuantity(item.id, value, selectedUnit))
+            },
+            onUnitClick = { showUnitDialog = true },
+        )
+    }
+
+    if (showUnitDialog) {
+        UnitSelectionDialog(
+            currentUnit = selectedUnit,
+            onDismiss = { showUnitDialog = false },
+            onSelect = { unit ->
+                selectedUnit = unit
+                showUnitDialog = false
+            },
+        )
     }
 }
 

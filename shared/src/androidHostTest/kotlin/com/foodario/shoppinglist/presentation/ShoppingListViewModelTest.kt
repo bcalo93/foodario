@@ -12,6 +12,7 @@ import com.foodario.shoppinglist.domain.usecase.AddToShoppingListParams
 import com.foodario.shoppinglist.domain.usecase.MoveToInventoryParams
 import com.foodario.shoppinglist.domain.usecase.ObserveShoppingListParams
 import com.foodario.shoppinglist.domain.usecase.RemoveFromShoppingListParams
+import com.foodario.shoppinglist.domain.usecase.UpdateShoppingItemQuantityParams
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -38,6 +39,7 @@ class ShoppingListViewModelTest {
     private val observeShoppingList = mockk<ObserveUseCase<ObserveShoppingListParams, List<ShoppingItem>>>()
     private val moveToInventory = mockk<UseCase<MoveToInventoryParams, FoodItem>>()
     private val addToShoppingList = mockk<UseCase<AddToShoppingListParams, Unit>>()
+    private val updateShoppingItemQuantity = mockk<UseCase<UpdateShoppingItemQuantityParams, Unit>>()
     private val removeFromShoppingList = mockk<UseCase<RemoveFromShoppingListParams, Unit>>()
 
     private val leche = ShoppingItem(
@@ -84,6 +86,7 @@ class ShoppingListViewModelTest {
         observeShoppingList,
         moveToInventory,
         addToShoppingList,
+        updateShoppingItemQuantity,
         removeFromShoppingList,
     )
 
@@ -205,6 +208,25 @@ class ShoppingListViewModelTest {
         }
 
         coVerify { moveToInventory(MoveToInventoryParams(1L)) }
+    }
+
+    @Test
+    fun `set quantity calls update use case with quantity and unit`() = runTest {
+        every { observeShoppingList(ObserveShoppingListParams) } returns flowOf(listOf(leche))
+        coEvery { updateShoppingItemQuantity(any()) } returns Unit
+        val viewModel = newViewModel()
+
+        viewModel.uiState.test {
+            awaitLoaded()
+            viewModel.onEvent(ShoppingListEvent.SetQuantity(itemId = 1L, quantity = 2.5, unit = QuantityUnit.KILOGRAMS))
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        coVerify {
+            updateShoppingItemQuantity(
+                UpdateShoppingItemQuantityParams(itemId = 1L, quantity = 2.5, unit = QuantityUnit.KILOGRAMS)
+            )
+        }
     }
 
     @Test

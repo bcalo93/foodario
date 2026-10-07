@@ -32,6 +32,8 @@ import com.foodario.shoppinglist.domain.usecase.ObserveShoppingListParams
 import com.foodario.shoppinglist.domain.usecase.ObserveShoppingListUseCase
 import com.foodario.shoppinglist.domain.usecase.RemoveFromShoppingListParams
 import com.foodario.shoppinglist.domain.usecase.RemoveFromShoppingListUseCase
+import com.foodario.shoppinglist.domain.usecase.UpdateShoppingItemQuantityParams
+import com.foodario.shoppinglist.domain.usecase.UpdateShoppingItemQuantityUseCase
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
 
@@ -48,6 +50,7 @@ val domainModule = module {
     factory<ObserveUseCase<ObserveFoodItemParams, FoodItem?>>(named("observeFoodItem")) { ObserveFoodItemUseCase(get()) }
     factory<ObserveUseCase<ObserveShoppingListParams, List<ShoppingItem>>>(named("observeShoppingList")) { ObserveShoppingListUseCase(get()) }
     factory<UseCase<AddToShoppingListParams, Unit>>(named("addToShoppingList")) { AddToShoppingListUseCase(get()) }
+    factory<UseCase<UpdateShoppingItemQuantityParams, Unit>>(named("updateShoppingItemQuantity")) { UpdateShoppingItemQuantityUseCase(get()) }
     factory<UseCase<RemoveFromShoppingListParams, Unit>>(named("removeFromShoppingList")) { RemoveFromShoppingListUseCase(get()) }
     factory<UseCase<MoveToInventoryParams, FoodItem>>(named("moveToInventory")) { MoveToInventoryUseCase(get(), get()) }
 }
