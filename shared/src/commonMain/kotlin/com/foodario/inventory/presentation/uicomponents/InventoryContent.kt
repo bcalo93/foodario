@@ -174,6 +174,15 @@ internal fun InventoryContent(
                                         )
                                     )
                                 },
+                                onDecreaseQuantity = {
+                                    onEvent(
+                                        InventoryEvent.DecreaseQuantity(
+                                            itemId = item.id,
+                                            currentQuantity = item.quantity,
+                                            unit = item.unit,
+                                        )
+                                    )
+                                },
                                 onDelete = { onEvent(InventoryEvent.Delete(item.id)) },
                                 modifier = Modifier.animateItem(),
                             )

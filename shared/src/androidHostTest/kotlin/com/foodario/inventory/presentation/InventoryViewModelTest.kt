@@ -218,6 +218,92 @@ class InventoryViewModelTest {
     }
 
     @Test
+    fun `decrease quantity uses the selected unit step`() = runTest {
+        every { observeInventory(any()) } returns flowOf(listOf(leche))
+        coEvery { updateQuantity(any()) } returns Unit
+        val viewModel = viewModel()
+
+        viewModel.uiState.test {
+            awaitLoaded()
+            viewModel.onEvent(
+                InventoryEvent.DecreaseQuantity(
+                    itemId = leche.id,
+                    currentQuantity = leche.quantity,
+                    unit = leche.unit,
+                )
+            )
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        coVerify { updateQuantity(UpdateQuantityParams(leche.id, 1.0)) }
+    }
+
+    @Test
+    fun `decrease quantity uses grams step`() = runTest {
+        val cheese = leche.copy(quantity = 300.0, unit = QuantityUnit.GRAMS)
+        every { observeInventory(any()) } returns flowOf(listOf(cheese))
+        coEvery { updateQuantity(any()) } returns Unit
+        val viewModel = viewModel()
+
+        viewModel.uiState.test {
+            awaitLoaded()
+            viewModel.onEvent(
+                InventoryEvent.DecreaseQuantity(
+                    itemId = cheese.id,
+                    currentQuantity = cheese.quantity,
+                    unit = cheese.unit,
+                )
+            )
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        coVerify { updateQuantity(UpdateQuantityParams(cheese.id, 250.0)) }
+    }
+
+    @Test
+    fun `decrease quantity uses decimal step for kilograms`() = runTest {
+        val meat = leche.copy(quantity = 1.0, unit = QuantityUnit.KILOGRAMS)
+        every { observeInventory(any()) } returns flowOf(listOf(meat))
+        coEvery { updateQuantity(any()) } returns Unit
+        val viewModel = viewModel()
+
+        viewModel.uiState.test {
+            awaitLoaded()
+            viewModel.onEvent(
+                InventoryEvent.DecreaseQuantity(
+                    itemId = meat.id,
+                    currentQuantity = meat.quantity,
+                    unit = meat.unit,
+                )
+            )
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        coVerify { updateQuantity(UpdateQuantityParams(meat.id, 0.9)) }
+    }
+
+    @Test
+    fun `decrease quantity does not update when result is zero`() = runTest {
+        val single = leche.copy(quantity = 1.0)
+        every { observeInventory(any()) } returns flowOf(listOf(single))
+        val viewModel = viewModel()
+
+        viewModel.uiState.test {
+            awaitLoaded()
+            viewModel.onEvent(
+                InventoryEvent.DecreaseQuantity(
+                    itemId = single.id,
+                    currentQuantity = single.quantity,
+                    unit = single.unit,
+                )
+            )
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        coVerify(exactly = 0) { updateQuantity(any()) }
+    }
+
+    @Test
     fun `delete calls delete use case`() = runTest {
         every { observeInventory(any()) } returns flowOf(listOf(leche))
         coEvery { deleteFoodItem(any()) } returns Unit
