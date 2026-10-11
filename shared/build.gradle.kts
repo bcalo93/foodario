@@ -90,6 +90,7 @@ sqldelight {
     databases {
         create("FoodarioDatabase") {
             packageName.set("com.foodario.database")
+            version = 2
         }
     }
 }
