@@ -8,6 +8,9 @@ import org.koin.dsl.module
 
 fun platformModule() = module {
     single { DatabaseDriverFactory(androidContext()) }
+    single<com.foodario.alerts.domain.service.NotificationScheduler> {
+        com.foodario.alerts.AndroidNotificationScheduler(androidContext())
+    }
 }
 
 fun initKoin(context: Context) = startKoin {
