@@ -1,5 +1,8 @@
 TEAM_ID=
 
+// No firmar en simulador (no necesita development team).
+CODE_SIGNING_ALLOWED[sdk=iphonesimulator*] = NO
+
 PRODUCT_NAME=Foodario
 PRODUCT_BUNDLE_IDENTIFIER=com.foodario.Foodario$(TEAM_ID)
 
