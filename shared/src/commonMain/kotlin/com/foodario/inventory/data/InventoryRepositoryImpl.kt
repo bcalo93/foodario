@@ -101,7 +101,7 @@ class InventoryRepositoryImpl(
         queries.selectByName(name = name).executeAsOneOrNull()?.toDomain()
     }
 
-    override fun observeInventory(query: String, category: FoodCategory?): Flow<List<FoodItem>> {
+    override fun observeInventory(query: String): Flow<List<FoodItem>> {
         val flow = if (query.isBlank()) {
             queries.selectAll().asFlow()
         } else {
@@ -109,7 +109,7 @@ class InventoryRepositoryImpl(
         }
         return flow
             .mapToList(ioDispatcher)
-            .map { entities -> entities.map { it.toDomain() }.filterByCategory(category) }
+            .map { entities -> entities.map { it.toDomain() } }
     }
 
     override fun observeById(id: Long): Flow<FoodItem?> =
@@ -117,9 +117,6 @@ class InventoryRepositoryImpl(
             .asFlow()
             .mapToOneOrNull(ioDispatcher)
             .map { it?.toDomain() }
-
-    private fun List<FoodItem>.filterByCategory(category: FoodCategory?): List<FoodItem> =
-        if (category == null) this else filter { it.category == category }
 }
 
 private const val MILLIS_PER_DAY = 86_400_000L

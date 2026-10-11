@@ -153,14 +153,13 @@ class AddFoodItemUseCase(
 
 data class ObserveInventoryParams(
     val query: String = "",
-    val category: FoodCategory? = null,
 )
 
 class ObserveInventoryUseCase(
     private val repository: InventoryRepository,
 ) : ObserveUseCase<ObserveInventoryParams, List<FoodItem>> {
     override fun invoke(params: ObserveInventoryParams): Flow<List<FoodItem>> =
-        repository.observeInventory(params.query, params.category)
+        repository.observeInventory(params.query)
 }
 ```
 
@@ -203,7 +202,7 @@ com.foodario/
 │   │   │   └── InventoryRepository.kt
 │   │   └── usecase/
 │   │       ├── InventoryUseCases.kt         # Add, UpdateQuantity/Category/Unit/Expiration, Consume, Delete, ToggleFrozen (+ Params)
-│   │       ├── ObserveInventoryUseCase.kt   # Stream with search / category
+│   │       ├── ObserveInventoryUseCase.kt   # Stream with name search
 │   │       └── ObserveFoodItemUseCase.kt    # Stream by id → FoodDetailViewModel
 │   ├── data/
 │   │   ├── InventoryRepositoryImpl.kt
@@ -452,12 +451,12 @@ actual class DatabaseDriverFactory {
 `app.cash.sqldelight:coroutines-extensions` is used to turn queries into `Flow`:
 
 ```kotlin
-// InventoryRepository — observe the whole inventory (filtered by name and category)
-override fun observeInventory(query: String, category: FoodCategory?): Flow<List<FoodItem>> {
+// InventoryRepository — observe the inventory, optionally filtered by name
+override fun observeInventory(query: String): Flow<List<FoodItem>> {
     val flow = if (query.isBlank()) queries.selectAll().asFlow()
                else queries.search(query = query).asFlow()
     return flow.mapToList(ioDispatcher)
-        .map { entities -> entities.map { it.toDomain() }.filterByCategory(category) }
+        .map { entities -> entities.map { it.toDomain() } }
 }
 
 // InventoryRepository — observe a single item by id (FoodDetailViewModel)
@@ -465,7 +464,7 @@ override fun observeById(id: Long): Flow<FoodItem?> =
     queries.selectById(id = id).asFlow().mapToOneOrNull(ioDispatcher).map { it?.toDomain() }
 ```
 
-`ioDispatcher` is injected into the repository (`CoroutineDispatcher = Dispatchers.IO` by default) so it can be substituted in tests. The category filter happens in memory (`filterByCategory`); the `search` query does it in SQL and already comes back ordered by `name ASC`.
+`ioDispatcher` is injected into the repository (`CoroutineDispatcher = Dispatchers.IO` by default) so it can be substituted in tests. Name search happens in SQL; both queries return rows ordered by `name ASC`. `InventoryViewModel` orders visible items by `FoodCategory` declaration order, then by product name.
 
 The database is the **single source of truth**: any `insert`/`update`/`delete` automatically emits toward the UI through these Flows. There are no in-memory caches or duplicated states.
 
@@ -488,7 +487,7 @@ Composable (re-render) ← UiState ← StateFlow ← Flow ← Updated query ←�
 3. The UseCase validates (quantity ≥ 0; if it reaches 0, suggest moving to shopping) and delegates to `InventoryRepository`.
 4. The repository executes `updateQuantity` on SQLDelight.
 5. SQLDelight invalidates the `selectAll` query → the `Flow` emits the new list.
-6. The ViewModel transforms it into `InventoryUiState` and the UI re-renders.
+6. The ViewModel orders the emitted items by `FoodCategory` declaration order and product name, transforms them into `InventoryUiState`, and the UI re-renders.
 
 ### UiState per screen
 
@@ -496,7 +495,6 @@ Composable (re-render) ← UiState ← StateFlow ← Flow ← Updated query ←�
 data class InventoryUiState(
     val items: List<FoodItem> = emptyList(),
     val searchQuery: String = "",
-    val selectedCategory: FoodCategory? = null,
     val isLoading: Boolean = true,
     val error: String? = null,
 )

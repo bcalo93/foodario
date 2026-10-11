@@ -16,6 +16,6 @@ interface InventoryRepository {
     suspend fun delete(id: Long)
     suspend fun getById(id: Long): FoodItem?
     suspend fun findByName(name: String): FoodItem?
-    fun observeInventory(query: String, category: FoodCategory?): Flow<List<FoodItem>>
+    fun observeInventory(query: String): Flow<List<FoodItem>>
     fun observeById(id: Long): Flow<FoodItem?>
 }
