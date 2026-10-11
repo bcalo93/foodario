@@ -8,7 +8,10 @@ import com.foodario.inventory.domain.model.QuantityUnit
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
+import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.minus
+import kotlinx.datetime.plus
 import kotlin.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -155,5 +158,19 @@ class InventoryRepositoryImplTest {
 
         repository.delete(added.id)
         assertNull(repository.observeById(added.id).first())
+    }
+
+    @Test
+    fun `observeExpiringFrom returns only items expiring on or after the given date`() = runTest {
+        val repository = inMemoryRepository()
+        val today = LocalDate(2026, 10, 11)
+        repository.add(foodItem("Vence ayer").copy(expirationDate = today.minus(1, DateTimeUnit.DAY)))
+        repository.add(foodItem("Vence hoy").copy(expirationDate = today))
+        repository.add(foodItem("Vence en 5 dias").copy(expirationDate = today.plus(5, DateTimeUnit.DAY)))
+        repository.add(foodItem("Sin vencimiento"))
+
+        val result = repository.observeExpiringFrom(today).first()
+
+        assertEquals(listOf("Vence hoy", "Vence en 5 dias"), result.map { it.name })
     }
 }
