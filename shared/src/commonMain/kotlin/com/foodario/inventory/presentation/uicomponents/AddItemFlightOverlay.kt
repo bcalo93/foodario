@@ -82,33 +82,40 @@ internal fun AddItemFlightOverlay(
             return@LaunchedEffect
         }
 
-        val parent = currentParent
-        val bar = currentBar
-        if (parent == null || bar == null) {
-            if (currentListState.layoutInfo.visibleItemsInfo.none { it.index == index }) {
-                scope.launch { currentListState.animateScrollToItem(index) }
-            }
+        val coordinates = withTimeoutOrNull(800.milliseconds) {
+            snapshotFlow {
+                val parent = currentParent?.takeIf { it.isAttached }
+                val bar = currentBar?.takeIf { it.isAttached }
+                val list = currentList?.takeIf { it.isAttached }
+                if (parent != null && bar != null && list != null) {
+                    Triple(parent, bar, list)
+                } else {
+                    null
+                }
+            }.first { it != null }
+        }
+        if (coordinates == null) {
             onFinished()
             return@LaunchedEffect
         }
+        val (parent, bar, list) = coordinates
 
         val start = parent.localPositionOf(
             bar,
             Offset(bar.size.width * 0.25f, bar.size.height * 0.7f),
         )
 
-        val list = currentList
         val info = currentListState.layoutInfo.visibleItemsInfo.find { it.index == index }
         val end: Offset
         var scrollToItem = false
         when {
-            info != null && list != null -> {
+            info != null -> {
                 end = parent.localPositionOf(
                     list,
                     with(density) { Offset(48.dp.toPx(), info.offset.toFloat() + info.size / 2f) },
                 )
             }
-            list != null -> {
+            else -> {
                 val topLeft = parent.localPositionOf(list, Offset.Zero)
                 val goDown = index > (currentListState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1)
                 val y = if (goDown) {
@@ -119,7 +126,6 @@ internal fun AddItemFlightOverlay(
                 end = with(density) { Offset(topLeft.x + 48.dp.toPx(), y) }
                 scrollToItem = true
             }
-            else -> end = start
         }
 
         label = current.name
