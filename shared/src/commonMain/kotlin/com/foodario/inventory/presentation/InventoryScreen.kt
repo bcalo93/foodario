@@ -7,6 +7,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.foodario.alerts.presentation.uicomponents.AlertSettingsDialog
 import com.foodario.inventory.presentation.uicomponents.InventoryContent
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -18,6 +19,7 @@ fun InventoryScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val quickAddCategory by viewModel.quickAddCategory.collectAsStateWithLifecycle()
     var flight by remember { mutableStateOf<InventoryEffect.ItemAdded?>(null) }
+    var showAlertSettings by remember { mutableStateOf(false) }
 
     LaunchedEffect(viewModel) {
         viewModel.effects.collect { effect ->
@@ -34,5 +36,10 @@ fun InventoryScreen(
         onEvent = viewModel::onEvent,
         onItemClick = onItemClick,
         onFlightFinished = { flight = null },
+        onAlertSettingsClick = { showAlertSettings = true },
     )
+
+    if (showAlertSettings) {
+        AlertSettingsDialog(onDismiss = { showAlertSettings = false })
+    }
 }

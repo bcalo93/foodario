@@ -1,5 +1,6 @@
 package com.foodario.di
 
+import com.foodario.alerts.presentation.AlertSettingsViewModel
 import com.foodario.inventory.presentation.FoodDetailViewModel
 import com.foodario.inventory.presentation.InventoryViewModel
 import com.foodario.shoppinglist.presentation.ShoppingListViewModel
@@ -36,6 +37,14 @@ val presentationModule = module {
             addToShoppingList = get(named("addToShoppingList")),
             updateShoppingItemQuantity = get(named("updateShoppingItemQuantity")),
             removeFromShoppingList = get(named("removeFromShoppingList")),
+        )
+    }
+    viewModel {
+        AlertSettingsViewModel(
+            observeAlertSettings = get(named("observeAlertSettings")),
+            setAlertNotificationsEnabled = get(named("setAlertNotificationsEnabled")),
+            setAlertLeadDays = get(named("setAlertLeadDays")),
+            setAlertNotifyHour = get(named("setAlertNotifyHour")),
         )
     }
 }
