@@ -18,4 +18,5 @@ interface InventoryRepository {
     suspend fun findByName(name: String): FoodItem?
     fun observeInventory(query: String): Flow<List<FoodItem>>
     fun observeById(id: Long): Flow<FoodItem?>
+    fun observeExpiringFrom(fromDate: LocalDate): Flow<List<FoodItem>>
 }
