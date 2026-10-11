@@ -162,6 +162,13 @@ The "moderate" metaphor is materialized in these components (all in `core/presen
 - **Item detail** is pushed with `navigate(FoodDetailRoute(itemId))`; on delete, `FoodDetailEffect.Deleted` is emitted and `navController.popBackStack()` closes the screen.
 - **Section dividers** = doodles (scribble, arrow, hand-drawn asterisk) instead of straight lines.
 
+### 5.6 `AlertSettingsDialog` — expiration notices
+
+- Notebook-style dialog (`paperElevated`) opened from the 🔔 bell in the inventory header (`InventoryContent` → `InventoryScreen` shows `AlertSettingsDialog`).
+- A `Switch` for **"Activar avisos"**; when off, the steppers below dim (alpha 0.5) and notifications are cancelled.
+- **Days stepper** ("Avisar … días antes", 1–14) and **hour stepper** ("Avisar a las … h", 0–23) using the hand-drawn circular `−`/`+` buttons from the stepper idiom; the value renders in `quantityHand`.
+- Caption in `caption`/`inkSoft`: *"Podés usar ese producto en una comida antes de que venza"*. Confirm button "Listo" in `penBlue`.
+
 ---
 
 ## 6. Layout and spacing
