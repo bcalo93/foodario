@@ -20,7 +20,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
@@ -30,7 +29,6 @@ import kotlinx.coroutines.launch
 
 sealed interface InventoryEvent {
     data class SearchQueryChanged(val query: String) : InventoryEvent
-    data class CategorySelected(val category: FoodCategory?) : InventoryEvent
     data class QuickAdd(val name: String) : InventoryEvent
     data class QuickAddCategorySelected(val category: FoodCategory) : InventoryEvent
     data class IncreaseQuantity(
@@ -63,7 +61,6 @@ class InventoryViewModel(
 ) : ViewModel() {
 
     private val searchQuery = MutableStateFlow("")
-    private val selectedCategory = MutableStateFlow<FoodCategory?>(null)
     private val addCategory = MutableStateFlow(FoodCategory.OTHER)
 
     private val effectChannel = Channel<InventoryEffect>(Channel.BUFFERED)
@@ -73,14 +70,13 @@ class InventoryViewModel(
     val quickAddCategory: StateFlow<FoodCategory> = addCategory.asStateFlow()
 
     val uiState: StateFlow<InventoryUiState> =
-        combine(searchQuery, selectedCategory) { q, c -> q to c }
-            .flatMapLatest { (q, c) ->
-                observeInventory(ObserveInventoryParams(query = q, category = c))
+        searchQuery
+            .flatMapLatest { q ->
+                observeInventory(ObserveInventoryParams(query = q))
                     .map { items ->
                         InventoryUiState(
-                            items = items,
+                            items = items.sortedWith(inventoryItemComparator),
                             searchQuery = q,
-                            selectedCategory = c,
                             isLoading = false,
                         )
                     }
@@ -88,7 +84,6 @@ class InventoryViewModel(
                         emit(
                             InventoryUiState(
                                 searchQuery = q,
-                                selectedCategory = c,
                                 isLoading = true,
                             )
                         )
@@ -97,7 +92,6 @@ class InventoryViewModel(
                         emit(
                             InventoryUiState(
                                 searchQuery = q,
-                                selectedCategory = c,
                                 isLoading = false,
                                 error = e.message,
                             )
@@ -113,7 +107,6 @@ class InventoryViewModel(
     fun onEvent(event: InventoryEvent) {
         when (event) {
             is InventoryEvent.SearchQueryChanged -> searchQuery.value = event.query
-            is InventoryEvent.CategorySelected -> selectedCategory.value = event.category
             is InventoryEvent.QuickAddCategorySelected -> addCategory.value = event.category
             is InventoryEvent.QuickAdd -> viewModelScope.launch {
                 runCatching {
@@ -160,3 +153,7 @@ class InventoryViewModel(
         }
     }
 }
+
+private val inventoryItemComparator =
+    compareBy<FoodItem> { it.category.ordinal }
+        .thenBy { it.name.lowercase() }

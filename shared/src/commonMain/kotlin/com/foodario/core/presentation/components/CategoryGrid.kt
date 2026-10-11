@@ -46,7 +46,7 @@ private const val CollapsedCategoryCount = 4
 
 @Composable
 fun CategoryGrid(
-    selectedCategory: FoodCategory?,
+    selectedCategory: FoodCategory,
     onCategoryClick: (FoodCategory) -> Unit,
     modifier: Modifier = Modifier,
     categories: List<FoodCategory> = FoodCategory.entries,
@@ -54,7 +54,7 @@ fun CategoryGrid(
     var expanded by remember { mutableStateOf(false) }
 
     val head = categories.take(CollapsedCategoryCount).toMutableList()
-    if (selectedCategory != null && selectedCategory !in head) {
+    if (selectedCategory !in head) {
         head[CollapsedCategoryCount - 1] = selectedCategory
     }
     val tail = categories.filter { it !in head }
@@ -197,24 +197,6 @@ private fun MoreButton(
                     cap = StrokeCap.Round,
                 )
             }
-        }
-    }
-}
-
-@Preview
-@Composable
-private fun CategoryGridNullPreview() {
-    FoodarioTheme(darkTheme = false) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(FoodarioTheme.colors.paper)
-                .padding(FoodarioTheme.dimensions.lg),
-        ) {
-            CategoryGrid(
-                selectedCategory = null,
-                onCategoryClick = {},
-            )
         }
     }
 }

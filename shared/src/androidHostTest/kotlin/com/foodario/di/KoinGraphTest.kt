@@ -88,7 +88,7 @@ class KoinGraphTest {
         )
         val inventoryRepository = mockk<InventoryRepository>()
         val shoppingListRepository = mockk<ShoppingListRepository>()
-        every { inventoryRepository.observeInventory("", null) } returns flowOf(listOf(foodItem))
+        every { inventoryRepository.observeInventory("") } returns flowOf(listOf(foodItem))
         every { inventoryRepository.observeById(1L) } returns flowOf(foodItem)
         every { shoppingListRepository.observeShoppingList() } returns flowOf(listOf(shoppingItem))
 

@@ -167,12 +167,12 @@ class InventoryUseCasesTest {
     @Test
     fun `observeInventory delegates to repository`() = runTest {
         val repository = mockk<InventoryRepository>()
-        every { repository.observeInventory("lech", FoodCategory.DAIRY) } returns emptyFlow()
+        every { repository.observeInventory("lech") } returns emptyFlow()
         val useCase = ObserveInventoryUseCase(repository)
 
-        useCase(ObserveInventoryParams(query = "lech", category = FoodCategory.DAIRY))
+        useCase(ObserveInventoryParams(query = "lech"))
 
-        verify { repository.observeInventory("lech", FoodCategory.DAIRY) }
+        verify { repository.observeInventory("lech") }
     }
 
     @Test

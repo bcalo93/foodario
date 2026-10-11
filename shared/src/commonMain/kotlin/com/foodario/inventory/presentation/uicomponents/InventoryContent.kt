@@ -27,7 +27,6 @@ import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.foodario.core.presentation.components.CategoryGrid
 import com.foodario.core.presentation.components.DoodleDivider
 import com.foodario.core.presentation.components.FridgeIllustration
 import com.foodario.core.presentation.components.QuickAddBar
@@ -82,15 +81,6 @@ internal fun InventoryContent(
                 InventorySearchField(
                     value = uiState.searchQuery,
                     onValueChange = { onEvent(InventoryEvent.SearchQueryChanged(it)) },
-                )
-                Spacer(Modifier.height(FoodarioTheme.dimensions.md))
-                CategoryGrid(
-                    selectedCategory = uiState.selectedCategory,
-                    onCategoryClick = { category ->
-                        val next = if (category == uiState.selectedCategory) null else category
-                        onEvent(InventoryEvent.CategorySelected(next))
-                    },
-                    modifier = Modifier.fillMaxWidth(),
                 )
                 Spacer(Modifier.height(FoodarioTheme.dimensions.sm))
                 DoodleDivider()

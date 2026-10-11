@@ -46,7 +46,7 @@ class InventoryRepositoryImplTest {
         val added = repository.add(foodItem("Leche", quantity = 2.0))
 
         assertEquals(1L, added.id)
-        val items = repository.observeInventory("", null).first()
+        val items = repository.observeInventory("").first()
         assertEquals(listOf("Leche"), items.map { it.name })
         assertEquals(2.0, items.first().quantity)
     }
@@ -62,14 +62,14 @@ class InventoryRepositoryImplTest {
     }
 
     @Test
-    fun `observeInventory filters by category`() = runTest {
+    fun `observeInventory returns items from all categories`() = runTest {
         val repository = inMemoryRepository()
         repository.add(foodItem("Leche", FoodCategory.DAIRY))
         repository.add(foodItem("Manzana", FoodCategory.FRUITS))
 
-        val dairy = repository.observeInventory("", FoodCategory.DAIRY).first()
+        val items = repository.observeInventory("").first()
 
-        assertEquals(listOf("Leche"), dairy.map { it.name })
+        assertEquals(listOf("Leche", "Manzana"), items.map { it.name })
     }
 
     @Test
@@ -78,7 +78,7 @@ class InventoryRepositoryImplTest {
         repository.add(foodItem("Leche", FoodCategory.DAIRY))
         repository.add(foodItem("Manzana", FoodCategory.FRUITS))
 
-        val result = repository.observeInventory("lech", null).first()
+        val result = repository.observeInventory("lech").first()
 
         assertEquals(listOf("Leche"), result.map { it.name })
     }

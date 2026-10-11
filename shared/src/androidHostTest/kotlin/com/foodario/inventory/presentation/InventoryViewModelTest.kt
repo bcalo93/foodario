@@ -88,19 +88,29 @@ class InventoryViewModelTest {
     }
 
     @Test
-    fun `filters by category via event`() = runTest {
-        every { observeInventory(any()) } returns flowOf(listOf(leche))
+    fun `orders items by category then name for inventory and search`() = runTest {
+        val items = listOf(
+            leche.copy(id = 3L, name = "Manzana", category = FoodCategory.FRUITS),
+            leche.copy(id = 2L, name = "Yogur"),
+            leche.copy(id = 4L, name = "Zanahoria", category = FoodCategory.VEGETABLES),
+            leche,
+        )
+        val expectedNames = listOf("Leche", "Yogur", "Zanahoria", "Manzana")
+        every { observeInventory(any()) } returns flowOf(items)
         val viewModel = viewModel()
 
         viewModel.uiState.test {
-            awaitLoaded()
-            viewModel.onEvent(InventoryEvent.CategorySelected(FoodCategory.DAIRY))
-            val state = awaitLoaded()
-            assertEquals(FoodCategory.DAIRY, state.selectedCategory)
+            assertEquals(expectedNames, awaitLoaded().items.map { it.name })
+
+            viewModel.onEvent(InventoryEvent.SearchQueryChanged("a"))
+            val searched = awaitLoaded()
+            assertEquals("a", searched.searchQuery)
+            assertEquals(expectedNames, searched.items.map { it.name })
+
             cancelAndIgnoreRemainingEvents()
         }
 
-        verify { observeInventory(ObserveInventoryParams(category = FoodCategory.DAIRY)) }
+        verify { observeInventory(ObserveInventoryParams(query = "a")) }
     }
 
     @Test
