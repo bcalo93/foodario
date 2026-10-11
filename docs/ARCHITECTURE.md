@@ -203,7 +203,8 @@ com.foodario/
 │   │   └── usecase/
 │   │       ├── InventoryUseCases.kt         # Add, UpdateQuantity/Category/Unit/Expiration, Consume, Delete, ToggleFrozen (+ Params)
 │   │       ├── ObserveInventoryUseCase.kt   # Stream with name search
-│   │       └── ObserveFoodItemUseCase.kt    # Stream by id → FoodDetailViewModel
+│   │       ├── ObserveFoodItemUseCase.kt    # Stream by id → FoodDetailViewModel
+│   │       └── ObserveExpiringItemsUseCase.kt # Stream from :fromDate (selectExpiringFrom) — reused by `alerts`
 │   ├── data/
 │   │   ├── InventoryRepositoryImpl.kt
 │   │   └── FoodItemMapper.kt
@@ -243,6 +244,26 @@ com.foodario/
 │       └── uicomponents/
 │           ├── ShoppingListContent.kt
 │           └── ShoppingListItemRow.kt        # hand-drawn check (HandDrawnCheckbox) + "Move to fridge"
+│
+├── alerts/                        # Feature: expiration notifications
+│   ├── domain/
+│   │   ├── model/
+│   │   │   ├── AlertSettings.kt              # enabled + leadDays (1..14) + notifyHour (0..23)
+│   │   │   └── ExpirationNotification.kt     # itemId, itemName, daysLeft, triggerAt
+│   │   ├── repository/
+│   │   │   └── AlertSettingsRepository.kt
+│   │   ├── usecase/
+│   │   │   └── AlertSettingsUseCases.kt      # Observe + SetEnabled/SetLeadDays/SetNotifyHour (+ Params)
+│   │   └── service/
+│   │       ├── NotificationScheduler.kt      # port: reconcileExpirations / cancelAll
+│   │       └── ExpirationNotificationSync.kt # reconcile-on-change of settings + expiring items
+│   ├── data/
+│   │   └── AlertSettingsRepositoryImpl.kt    # app_setting key/value (AppSettingsQueries)
+│   └── presentation/
+│       ├── AlertSettingsViewModel.kt
+│       ├── AlertSettingsUiState.kt
+│       └── uicomponents/
+│           └── AlertSettingsDialog.kt        # notebook dialog: switch + days/hour steppers
 │
 └── navigation/                   # Routes and nav graph
     └── FoodarioNavHost.kt        # InventoryRoute, ShoppingListRoute, FoodDetailRoute(@Serializable)
@@ -373,6 +394,11 @@ SELECT * FROM food_item
 WHERE expiration_date IS NOT NULL AND expiration_date <= :threshold
 ORDER BY expiration_date ASC;
 
+selectExpiringFrom:
+SELECT * FROM food_item
+WHERE expiration_date IS NOT NULL AND expiration_date >= :fromDate
+ORDER BY expiration_date ASC;
+
 insertFoodItem {
 INSERT INTO food_item(name, category, quantity, unit, is_frozen, expiration_date, created_at, updated_at)
 VALUES (:name, :category, :quantity, :unit, :isFrozen, :expirationDate, :createdAt, :updatedAt);
@@ -396,6 +422,20 @@ UPDATE food_item SET expiration_date = :expirationDate, updated_at = :updatedAt 
 
 delete:
 DELETE FROM food_item WHERE id = :id;
+```
+
+```sql
+-- AppSettings.sq
+CREATE TABLE app_setting (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+);
+
+selectAll:
+SELECT * FROM app_setting;
+
+upsert:
+INSERT OR REPLACE INTO app_setting(key, value) VALUES (:key, :value);
 ```
 
 ```sql
@@ -742,7 +782,7 @@ class InventoryViewModelTest {
 |---|---|
 | **MVP**: inventory, search, categories, quantity, optional expiration, shopping list | Covered by the `inventory` + `shoppinglist` features described in §5 |
 | **Quick add** ("Milk → +") | `AddFoodItemUseCase` accepts only `name` with defaults (quantity 1, unit UNIT, no expiration); details are completed later. The category for the next "quick" add lives in the ViewModel (`quickAddCategory: StateFlow<FoodCategory>`) — shared by `InventoryScreen` and `ShoppingListScreen`. |
-| **Phase 2**: expiration / low-stock alerts | New `alerts` feature with its own module: the `selectExpiringBefore(threshold)` query already exists in `FoodItem.sq`; only the matching `ObserveExpiringItemsUseCase` is missing. Local notifications are modeled as `expect/actual` per platform (no new Android module required). |
+| **Phase 2**: expiration / low-stock alerts | ✅ Implemented by the `alerts` feature: a `NotificationScheduler` port in `commonMain` with platform impls — Android via WorkManager (`ExpirationReminderWorker` + `AndroidNotificationScheduler`), iOS via `UNUserNotificationCenter` (`IosNotificationScheduler`) — driven by `ExpirationNotificationSync`, which reconciles notifications on every settings/items change (`selectExpiringFrom` → `ObserveExpiringItemsUseCase`). |
 | **Phase 3**: receipt scanning via camera | New `scanning` feature: expect/actual for camera / ML Kit per platform, reusing `AddFoodItemUseCase` (just added) to pre-fill the parsed items. |
 
 The per-feature separation and the dependency rule guarantee that phases 2 and 3 are added **without modifying** the existing layers — only extending them.

@@ -1,5 +1,9 @@
 package com.foodario.di
 
+import com.foodario.alerts.domain.model.AlertSettings
+import com.foodario.alerts.domain.repository.AlertSettingsRepository
+import com.foodario.alerts.domain.service.ExpirationNotificationSync
+import com.foodario.alerts.domain.service.NotificationScheduler
 import com.foodario.database.DatabaseDriverFactory
 import com.foodario.core.domain.usecase.ObserveUseCase
 import com.foodario.core.domain.usecase.UseCase
@@ -61,7 +65,11 @@ class KoinGraphTest {
             includes(dataModule, domainModule, presentationModule)
         }
         module.verify(
-            extraTypes = listOf(DatabaseDriverFactory::class, Long::class),
+            extraTypes = listOf(
+                DatabaseDriverFactory::class,
+                Long::class,
+                NotificationScheduler::class,
+            ),
         ).verify()
     }
 
@@ -97,6 +105,12 @@ class KoinGraphTest {
                 module {
                     single<InventoryRepository> { inventoryRepository }
                     single<ShoppingListRepository> { shoppingListRepository }
+                    single<AlertSettingsRepository> {
+                        mockk {
+                            every { observeSettings() } returns flowOf(AlertSettings())
+                        }
+                    }
+                    single<NotificationScheduler> { mockk(relaxed = true) }
                 },
                 domainModule,
                 presentationModule,
@@ -116,6 +130,7 @@ class KoinGraphTest {
         assertIs<UpdateShoppingItemQuantityUseCase>(
             koin.get<UseCase<UpdateShoppingItemQuantityParams, Unit>>(named("updateShoppingItemQuantity")),
         )
+        assertIs<ExpirationNotificationSync>(koin.get<ExpirationNotificationSync>())
 
         val inventoryState = koin.get<InventoryViewModel>().uiState.first { !it.isLoading }
         val shoppingState = koin.get<ShoppingListViewModel>().uiState.first { !it.isLoading }

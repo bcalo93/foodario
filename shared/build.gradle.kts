@@ -47,6 +47,8 @@ kotlin {
             implementation(libs.compose.uiTooling)
             implementation(libs.sqldelight.android.driver)
             implementation(libs.koin.android)
+            implementation(libs.androidx.work.runtime.ktx)
+            implementation(libs.androidx.core.ktx)
         }
         iosMain.dependencies {
             implementation(libs.sqldelight.native.driver)
@@ -88,6 +90,7 @@ sqldelight {
     databases {
         create("FoodarioDatabase") {
             packageName.set("com.foodario.database")
+            version = 2
         }
     }
 }

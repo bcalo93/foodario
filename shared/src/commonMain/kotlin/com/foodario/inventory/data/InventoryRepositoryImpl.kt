@@ -4,6 +4,8 @@ import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
 import app.cash.sqldelight.coroutines.mapToOneOrNull
 import com.foodario.database.FoodItemQueries
+import com.foodario.database.Food_item
+import com.foodario.database.SelectExpiringFrom
 import com.foodario.inventory.domain.model.FoodCategory
 import com.foodario.inventory.domain.model.FoodItem
 import com.foodario.inventory.domain.model.QuantityUnit
@@ -117,6 +119,25 @@ class InventoryRepositoryImpl(
             .asFlow()
             .mapToOneOrNull(ioDispatcher)
             .map { it?.toDomain() }
+
+    override fun observeExpiringFrom(fromDate: LocalDate): Flow<List<FoodItem>> =
+        queries.selectExpiringFrom(fromDate = fromDate.toEpochDays() * MILLIS_PER_DAY)
+            .asFlow()
+            .mapToList(ioDispatcher)
+            .map { entities -> entities.map { it.toDomain() } }
 }
+
+private fun SelectExpiringFrom.toDomain(): FoodItem =
+    Food_item(
+        id = id,
+        name = name,
+        category = category,
+        quantity = quantity,
+        unit = unit,
+        is_frozen = is_frozen,
+        expiration_date = expiration_date,
+        created_at = created_at,
+        updated_at = updated_at,
+    ).toDomain()
 
 private const val MILLIS_PER_DAY = 86_400_000L

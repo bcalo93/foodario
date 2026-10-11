@@ -53,3 +53,8 @@ DELETE FROM food_item WHERE id = :id;
 
 updateExpiration:
 UPDATE food_item SET expiration_date = :expirationDate, updated_at = :updatedAt WHERE id = :id;
+
+selectExpiringFrom:
+SELECT * FROM food_item
+WHERE expiration_date IS NOT NULL AND expiration_date >= :fromDate
+ORDER BY expiration_date ASC;

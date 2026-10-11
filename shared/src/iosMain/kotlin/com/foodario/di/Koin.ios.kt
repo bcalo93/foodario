@@ -6,6 +6,9 @@ import org.koin.dsl.module
 
 fun platformModule() = module {
     single { DatabaseDriverFactory() }
+    single<com.foodario.alerts.domain.service.NotificationScheduler> {
+        com.foodario.alerts.IosNotificationScheduler()
+    }
 }
 
 fun initKoin() = startKoin {

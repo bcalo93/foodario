@@ -1,5 +1,15 @@
 package com.foodario.di
 
+import com.foodario.alerts.domain.model.AlertSettings
+import com.foodario.alerts.domain.service.ExpirationNotificationSync
+import com.foodario.alerts.domain.usecase.ObserveAlertSettingsParams
+import com.foodario.alerts.domain.usecase.ObserveAlertSettingsUseCase
+import com.foodario.alerts.domain.usecase.SetAlertLeadDaysParams
+import com.foodario.alerts.domain.usecase.SetAlertLeadDaysUseCase
+import com.foodario.alerts.domain.usecase.SetAlertNotificationsEnabledParams
+import com.foodario.alerts.domain.usecase.SetAlertNotificationsEnabledUseCase
+import com.foodario.alerts.domain.usecase.SetAlertNotifyHourParams
+import com.foodario.alerts.domain.usecase.SetAlertNotifyHourUseCase
 import com.foodario.core.domain.usecase.ObserveUseCase
 import com.foodario.core.domain.usecase.UseCase
 import com.foodario.inventory.domain.model.FoodItem
@@ -12,6 +22,8 @@ import com.foodario.inventory.domain.usecase.DeleteFoodItemUseCase
 import com.foodario.inventory.domain.usecase.ObserveInventoryParams
 import com.foodario.inventory.domain.usecase.ObserveInventoryUseCase
 import com.foodario.inventory.domain.usecase.ObserveFoodItemParams
+import com.foodario.inventory.domain.usecase.ObserveExpiringItemsParams
+import com.foodario.inventory.domain.usecase.ObserveExpiringItemsUseCase
 import com.foodario.inventory.domain.usecase.ObserveFoodItemUseCase
 import com.foodario.inventory.domain.usecase.ToggleFrozenParams
 import com.foodario.inventory.domain.usecase.ToggleFrozenUseCase
@@ -53,4 +65,26 @@ val domainModule = module {
     factory<UseCase<UpdateShoppingItemQuantityParams, Unit>>(named("updateShoppingItemQuantity")) { UpdateShoppingItemQuantityUseCase(get()) }
     factory<UseCase<RemoveFromShoppingListParams, Unit>>(named("removeFromShoppingList")) { RemoveFromShoppingListUseCase(get()) }
     factory<UseCase<MoveToInventoryParams, FoodItem>>(named("moveToInventory")) { MoveToInventoryUseCase(get(), get()) }
+    factory<ObserveUseCase<ObserveExpiringItemsParams, List<FoodItem>>>(named("observeExpiringItems")) {
+        ObserveExpiringItemsUseCase(get())
+    }
+    factory<ObserveUseCase<ObserveAlertSettingsParams, AlertSettings>>(named("observeAlertSettings")) {
+        ObserveAlertSettingsUseCase(get())
+    }
+    factory<UseCase<SetAlertNotificationsEnabledParams, Unit>>(named("setAlertNotificationsEnabled")) {
+        SetAlertNotificationsEnabledUseCase(get())
+    }
+    factory<UseCase<SetAlertLeadDaysParams, Unit>>(named("setAlertLeadDays")) {
+        SetAlertLeadDaysUseCase(get())
+    }
+    factory<UseCase<SetAlertNotifyHourParams, Unit>>(named("setAlertNotifyHour")) {
+        SetAlertNotifyHourUseCase(get())
+    }
+    single {
+        ExpirationNotificationSync(
+            observeExpiringItems = get(named("observeExpiringItems")),
+            observeAlertSettings = get(named("observeAlertSettings")),
+            scheduler = get(),
+        )
+    }
 }

@@ -50,6 +50,7 @@ Inside `shared/src/commonMain/kotlin/com/foodario/`:
 - `<feature>/domain/usecase/` — `UseCase<P, R>` / `ObserveUseCase<P, R>` impls (see `core/domain/usecase/UseCase.kt`).
 - `<feature>/presentation/` — `*ViewModel`, `*UiState`, `*Screen` Composable.
 - `<feature>/presentation/uicomponents/` — sub-composables (e.g. dialogs).
+- `alerts/` — expiration-notification feature: `domain/model` (`AlertSettings`, `ExpirationNotification`), `domain/repository` (`AlertSettingsRepository`), `domain/usecase` (`AlertSettingsUseCases`), `domain/service` (`NotificationScheduler` port + `ExpirationNotificationSync`), `data` (`AlertSettingsRepositoryImpl`), `presentation` (`AlertSettingsUiState`, `AlertSettingsViewModel`) + `presentation/uicomponents/AlertSettingsDialog`. The expiring-items stream is `inventory/domain/usecase/ObserveExpiringItemsUseCase`.
 - `core/presentation/components/`, `core/presentation/theme/` — shared design system (notebook/skeuomorphic theme, fonts in `shared/src/commonMain/composeResources/font/`).
 - `navigation/` — `FoodarioNavHost` with type-safe routes (`@Serializable` `InventoryRoute`, `ShoppingListRoute`, `FoodDetailRoute`).
 - `di/` — `DataModule`, `DomainModule`, `PresentationModule`, `SharedModules`. Platform Koin init lives in `androidMain/.../di/Koin.android.kt` and `iosMain/.../di/Koin.ios.kt`; both call `sharedModules()`.
@@ -58,6 +59,7 @@ Cross-cutting wiring notes:
 
 - Use cases are registered in `DomainModule.kt` with `named("...")` qualifiers; ViewModels in `PresentationModule.kt` resolve them via `get(named("..."))`. Don't introduce a different DI convention.
 - `DatabaseDriverFactory` is `expect` in `commonMain` with `actual` in `androidMain` (AndroidSqliteDriver, db name `foodario.db`) and `iosMain` (native driver). Add new platform bits the same way.
+- Notifications are scheduled via the `NotificationScheduler` port: Android uses WorkManager (`ExpirationReminderWorker` + `AndroidNotificationScheduler`, tag `expiration_alert`) and requests `POST_NOTIFICATIONS` in `MainActivity`; iOS uses `UNUserNotificationCenter` (`IosNotificationScheduler`). `ExpirationNotificationSync.start()` is called in `FoodarioApplication` (Android) and `MainViewController` (iOS).
 
 ## SQLDelight
 
