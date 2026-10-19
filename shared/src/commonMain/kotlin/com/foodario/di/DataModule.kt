@@ -1,5 +1,7 @@
 package com.foodario.di
 
+import com.foodario.alerts.data.AlertSettingsRepositoryImpl
+import com.foodario.alerts.domain.repository.AlertSettingsRepository
 import com.foodario.database.DatabaseDriverFactory
 import com.foodario.database.FoodarioDatabase
 import com.foodario.inventory.data.InventoryRepositoryImpl
@@ -13,6 +15,8 @@ val dataModule = module {
     single { FoodarioDatabase(get()) }
     single { get<FoodarioDatabase>().foodItemQueries }
     single { get<FoodarioDatabase>().shoppingItemQueries }
+    single { get<FoodarioDatabase>().appSettingsQueries }
     single<InventoryRepository> { InventoryRepositoryImpl(get()) }
     single<ShoppingListRepository> { ShoppingListRepositoryImpl(get()) }
+    single<AlertSettingsRepository> { AlertSettingsRepositoryImpl(get()) }
 }

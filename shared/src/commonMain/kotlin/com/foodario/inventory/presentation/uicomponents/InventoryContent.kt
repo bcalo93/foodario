@@ -2,8 +2,10 @@ package com.foodario.inventory.presentation.uicomponents
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -25,8 +27,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.foodario.core.presentation.components.BellIllustration
 import com.foodario.core.presentation.components.DoodleDivider
 import com.foodario.core.presentation.components.FridgeIllustration
 import com.foodario.core.presentation.components.QuickAddBar
@@ -46,6 +50,7 @@ internal fun InventoryContent(
     onEvent: (InventoryEvent) -> Unit,
     onItemClick: (Long) -> Unit,
     onFlightFinished: () -> Unit,
+    onAlertSettingsClick: () -> Unit,
 ) {
     val colors = FoodarioTheme.colors
     val typography = FoodarioTheme.typography
@@ -72,11 +77,32 @@ internal fun InventoryContent(
                     .padding(horizontal = FoodarioTheme.dimensions.lg)
                     .padding(top = FoodarioTheme.dimensions.lg),
             ) {
-                Text(
-                    text = "Mi heladera",
-                    style = typography.displayHand,
-                    color = colors.ink,
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = "Mi heladera",
+                        style = typography.displayHand,
+                        color = colors.ink,
+                    )
+                    Spacer(Modifier.weight(1f))
+                    Box(
+                        modifier = Modifier
+                            .size(FoodarioTheme.dimensions.touchTarget)
+                            .clickable(
+                                onClickLabel = "Configurar avisos",
+                                role = Role.Button,
+                                onClick = onAlertSettingsClick,
+                            ),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        BellIllustration(
+                            modifier = Modifier.size(24.dp),
+                            contentDescription = "Configurar avisos",
+                        )
+                    }
+                }
                 Spacer(Modifier.height(FoodarioTheme.dimensions.md))
                 InventorySearchField(
                     value = uiState.searchQuery,
