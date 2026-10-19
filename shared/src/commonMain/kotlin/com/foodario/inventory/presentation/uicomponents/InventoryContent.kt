@@ -27,9 +27,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import com.foodario.core.presentation.components.BellIllustration
 import com.foodario.core.presentation.components.DoodleDivider
 import com.foodario.core.presentation.components.FridgeIllustration
 import com.foodario.core.presentation.components.QuickAddBar
@@ -89,10 +90,17 @@ internal fun InventoryContent(
                     Box(
                         modifier = Modifier
                             .size(FoodarioTheme.dimensions.touchTarget)
-                            .clickable(onClick = onAlertSettingsClick),
+                            .clickable(
+                                onClickLabel = "Configurar avisos",
+                                role = Role.Button,
+                                onClick = onAlertSettingsClick,
+                            ),
                         contentAlignment = Alignment.Center,
                     ) {
-                        Text(text = "🔔", fontSize = 22.sp)
+                        BellIllustration(
+                            modifier = Modifier.size(24.dp),
+                            contentDescription = "Configurar avisos",
+                        )
                     }
                 }
                 Spacer(Modifier.height(FoodarioTheme.dimensions.md))
