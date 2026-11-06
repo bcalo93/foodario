@@ -36,6 +36,7 @@ class InventoryUseCasesTest {
     fun `add delegates to repository and returns item`() = runTest {
         val repository = mockk<InventoryRepository>()
         val added = foodItem(id = 42L)
+        coEvery { repository.getAll() } returns emptyList()
         coEvery { repository.add(any()) } returns added
         val useCase = AddFoodItemUseCase(repository)
 
@@ -49,6 +50,54 @@ class InventoryUseCasesTest {
                 }
             )
         }
+    }
+
+    @Test
+    fun `exact match merges quantities and does not insert`() = runTest {
+        val repository = mockk<InventoryRepository>()
+        val existing = foodItem(id = 1L, quantity = 2.0)
+        coEvery { repository.getAll() } returns listOf(existing)
+        coEvery { repository.updateQuantity(any(), any()) } returns Unit
+        val useCase = AddFoodItemUseCase(repository)
+
+        val result = useCase(
+            AddFoodItemParams(name = " LECHE ", category = FoodCategory.DAIRY, quantity = 1.0)
+        )
+
+        assertEquals(1L, result.id)
+        assertEquals(3.0, result.quantity)
+        coVerify { repository.updateQuantity(1L, 3.0) }
+        coVerify(exactly = 0) { repository.add(any()) }
+    }
+
+    @Test
+    fun `exact match with different unit inserts a new item`() = runTest {
+        val repository = mockk<InventoryRepository>()
+        val existing = foodItem(id = 1L).copy(unit = QuantityUnit.GRAMS)
+        val added = foodItem(id = 42L)
+        coEvery { repository.getAll() } returns listOf(existing)
+        coEvery { repository.add(any()) } returns added
+        val useCase = AddFoodItemUseCase(repository)
+
+        useCase(AddFoodItemParams(name = "Leche", category = FoodCategory.DAIRY, quantity = 1.0))
+
+        coVerify(exactly = 1) { repository.add(any()) }
+        coVerify(exactly = 0) { repository.updateQuantity(any(), any()) }
+    }
+
+    @Test
+    fun `partial match inserts a new item`() = runTest {
+        val repository = mockk<InventoryRepository>()
+        val existing = foodItem(id = 1L).copy(name = "Leche condensada")
+        val added = foodItem(id = 42L)
+        coEvery { repository.getAll() } returns listOf(existing)
+        coEvery { repository.add(any()) } returns added
+        val useCase = AddFoodItemUseCase(repository)
+
+        useCase(AddFoodItemParams(name = "Leche", category = FoodCategory.DAIRY, quantity = 1.0))
+
+        coVerify(exactly = 1) { repository.add(any()) }
+        coVerify(exactly = 0) { repository.updateQuantity(any(), any()) }
     }
 
     @Test
