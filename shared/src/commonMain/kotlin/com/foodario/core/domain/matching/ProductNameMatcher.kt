@@ -44,6 +44,8 @@ object ProductNameMatcher {
             .filterNot { it.any(Char::isDigit) }
             .filterNot { it in STOPWORDS || it in UNIT_TOKENS }
 
+    internal fun significantTokensOf(raw: String): List<String> = significantTokens(normalize(raw))
+
     fun findMatches(query: String, candidates: List<FoodItem>): List<ProductMatch> {
         val normalizedQuery = normalize(query)
         if (normalizedQuery.isBlank()) return emptyList()
