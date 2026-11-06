@@ -30,6 +30,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.foodario.core.presentation.components.BellIllustration
 import com.foodario.core.presentation.components.DoodleDivider
 import com.foodario.core.presentation.components.FridgeIllustration
@@ -49,6 +50,7 @@ internal fun InventoryContent(
     flight: InventoryEffect.ItemAdded?,
     onEvent: (InventoryEvent) -> Unit,
     onItemClick: (Long) -> Unit,
+    onScanReceiptClick: () -> Unit,
     onFlightFinished: () -> Unit,
     onAlertSettingsClick: () -> Unit,
 ) {
@@ -87,6 +89,14 @@ internal fun InventoryContent(
                         color = colors.ink,
                     )
                     Spacer(Modifier.weight(1f))
+                    Box(
+                        modifier = Modifier
+                            .size(FoodarioTheme.dimensions.touchTarget)
+                            .clickable(onClick = onScanReceiptClick),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(text = "📷", fontSize = 22.sp)
+                    }
                     Box(
                         modifier = Modifier
                             .size(FoodarioTheme.dimensions.touchTarget)

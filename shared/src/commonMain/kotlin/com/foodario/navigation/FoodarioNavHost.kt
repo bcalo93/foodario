@@ -35,6 +35,7 @@ import com.foodario.core.presentation.components.FridgeIllustration
 import com.foodario.core.presentation.theme.FoodarioTheme
 import com.foodario.inventory.presentation.FoodDetailScreen
 import com.foodario.inventory.presentation.InventoryScreen
+import com.foodario.scanning.presentation.ReceiptScanScreen
 import com.foodario.shoppinglist.presentation.ShoppingListScreen
 import kotlinx.serialization.Serializable
 
@@ -43,6 +44,9 @@ data object InventoryRoute
 
 @Serializable
 data object ShoppingListRoute
+
+@Serializable
+data object ReceiptScanRoute
 
 @Serializable
 data class FoodDetailRoute(val itemId: Long)
@@ -76,7 +80,10 @@ fun FoodarioNavHost(navController: NavHostController = rememberNavController()) 
                 .consumeWindowInsets(innerPadding),
         ) {
             composable<InventoryRoute> {
-                InventoryScreen(onItemClick = { itemId -> navController.navigate(FoodDetailRoute(itemId)) })
+                InventoryScreen(
+                    onItemClick = { itemId -> navController.navigate(FoodDetailRoute(itemId)) },
+                    onScanReceiptClick = { navController.navigate(ReceiptScanRoute) },
+                )
             }
             composable<ShoppingListRoute> {
                 ShoppingListScreen()
@@ -87,6 +94,9 @@ fun FoodarioNavHost(navController: NavHostController = rememberNavController()) 
                     itemId = route.itemId,
                     onDeleted = { navController.popBackStack() },
                 )
+            }
+            composable<ReceiptScanRoute> {
+                ReceiptScanScreen(onClose = { navController.popBackStack() })
             }
         }
     }
