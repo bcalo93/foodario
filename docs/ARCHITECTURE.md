@@ -32,6 +32,7 @@ Natural flow: `Shop → add to the fridge → consume → inventory updates → 
 | ViewModel | **androidx.lifecycle ViewModel (KMP)** | Multiplatform ViewModels via `viewmodel-compose` |
 | Compose resources | `compose.components-resources` (bundled fonts) | Caveat + Nunito offline; no runtime downloads |
 | Dates | `kotlinx-datetime` | `LocalDate` / `Instant` in domain; epoch millis in DB |
+| Camera / OCR | **CameraX + ML Kit Text Recognition** (Android) / **AVFoundation + Vision** (iOS) | On-device, offline-first receipt scanning behind platform ports |
 | Navigation | `androidx.navigation:navigation-compose` (KMP) | Type-safe routes (`@Serializable data object/class`) |
 | Unit tests | `kotlin.test` + MockK | MockK lets you mock per layer for isolated tests |
 | Flow tests | **Turbine** | Assertions on `StateFlow`/`Flow` in ViewModels and repositories |
@@ -186,6 +187,7 @@ com.foodario/
 │
 ├── core/
 │   ├── domain/
+│   │   ├── matching/             # ProductNameMatcher.kt: normalization + EXACT/PARTIAL matching (anti-duplicates)
 │   │   └── usecase/              # UseCase.kt: contracts UseCase<P, R> + ObserveUseCase<P, R>
 │   └── presentation/
 │       ├── theme/                # FoodarioTheme, Color, Type, CategoryColors, Dimensions, ThemePreview
@@ -265,6 +267,26 @@ com.foodario/
 │       └── uicomponents/
 │           └── AlertSettingsDialog.kt        # notebook dialog: switch + days/hour steppers
 │
+├── scanning/                     # Feature: receipt scanning (camera + OCR)
+│   ├── domain/
+│   │   ├── model/
+│   │   │   └── ScannedReceiptItem.kt        # parsed item — ephemeral, never persisted
+│   │   ├── service/
+│   │   │   ├── ReceiptTextRecognizer.kt     # OCR port (Android: ML Kit / iOS: Vision)
+│   │   │   └── ReceiptParser.kt             # OCR lines → items (pure, es-AR heuristics)
+│   │   └── usecase/
+│   │       └── ScanningUseCases.kt          # ParseReceipt, MatchProducts, AddFoodItems (+ Params)
+│   └── presentation/
+│       ├── ReceiptScanScreen.kt
+│       ├── ReceiptScanViewModel.kt          # in-memory only state — no intermediate persistence
+│       ├── ReceiptScanUiState.kt
+│       ├── camera/
+│       │   └── ReceiptCamera.kt             # expect CameraController + CameraPreviewBox (actuals per platform)
+│       └── uicomponents/
+│           ├── CameraStepContent.kt
+│           ├── ReviewStepContent.kt
+│           └── ScannedItemRow.kt
+│
 └── navigation/                   # Routes and nav graph
     └── FoodarioNavHost.kt        # InventoryRoute, ShoppingListRoute, FoodDetailRoute(@Serializable)
 ```
@@ -333,6 +355,19 @@ data class ShoppingItem(
 - `expirationDate` is nullable: the MVP marks it optional.
 - `isFrozen` is a flag on the item, independent of the `FROZEN` category (a `MEAT` item can be frozen).
 - The `COOKED` category covers the concept use case: *"add cooked food like a sauce"*.
+
+```kotlin
+// scanning/domain/model/ScannedReceiptItem.kt — parsed, ephemeral
+data class ScannedReceiptItem(
+    val name: String,
+    val category: FoodCategory,
+    val quantity: Double,
+    val unit: QuantityUnit,
+    val rawLine: String,
+)
+```
+
+The scan flow persists nothing until confirm: no new tables, no DB version bump. `core/domain/matching/ProductNameMatcher` (normalize + EXACT/PARTIAL) is shared by all inventory-write paths (`AddFoodItemUseCase`, `AddFoodItemsUseCase`, `MoveToInventoryUseCase`): EXACT + same unit merges quantities; PARTIAL is only a user-confirmed suggestion in the receipt review screen.
 
 ---
 
@@ -589,6 +624,10 @@ val domainModule = module {
         RemoveFromShoppingListUseCase(get())
     }
     factory<UseCase<MoveToInventoryParams, FoodItem>>(named("moveToInventory"))      { MoveToInventoryUseCase(get(), get()) }
+    // Scanning (receipt OCR)
+    factory<UseCase<ParseReceiptParams, List<ScannedReceiptItem>>>(named("parseReceipt")) { ParseReceiptUseCase() }
+    factory<UseCase<MatchProductsParams, List<ProductMatch?>>>(named("matchProducts")) { MatchProductsUseCase(get()) }
+    factory<UseCase<AddFoodItemsParams, List<FoodItem>>>(named("addFoodItems")) { AddFoodItemsUseCase(get()) }
 }
 
 // di/PresentationModule.kt
@@ -620,6 +659,14 @@ val presentationModule = module {
             moveToInventory        = get(named("moveToInventory")),
             addToShoppingList      = get(named("addToShoppingList")),
             removeFromShoppingList = get(named("removeFromShoppingList")),
+        )
+    }
+    viewModel {
+        ReceiptScanViewModel(
+            receiptTextRecognizer = get(),   // port: platform module (ML Kit / Vision)
+            parseReceipt = get(named("parseReceipt")),
+            matchProducts = get(named("matchProducts")),
+            addFoodItems = get(named("addFoodItems")),
         )
     }
 }
@@ -783,7 +830,7 @@ class InventoryViewModelTest {
 | **MVP**: inventory, search, categories, quantity, optional expiration, shopping list | Covered by the `inventory` + `shoppinglist` features described in §5 |
 | **Quick add** ("Milk → +") | `AddFoodItemUseCase` accepts only `name` with defaults (quantity 1, unit UNIT, no expiration); details are completed later. The category for the next "quick" add lives in the ViewModel (`quickAddCategory: StateFlow<FoodCategory>`) — shared by `InventoryScreen` and `ShoppingListScreen`. |
 | **Phase 2**: expiration / low-stock alerts | ✅ Implemented by the `alerts` feature: a `NotificationScheduler` port in `commonMain` with platform impls — Android via WorkManager (`ExpirationReminderWorker` + `AndroidNotificationScheduler`), iOS via `UNUserNotificationCenter` (`IosNotificationScheduler`) — driven by `ExpirationNotificationSync`, which reconciles notifications on every settings/items change (`selectExpiringFrom` → `ObserveExpiringItemsUseCase`). |
-| **Phase 3**: receipt scanning via camera | New `scanning` feature: expect/actual for camera / ML Kit per platform, reusing `AddFoodItemUseCase` (just added) to pre-fill the parsed items. |
+| **Phase 3**: receipt scanning via camera | ✅ Implemented by the `scanning` feature: `ReceiptTextRecognizer` port (Android: ML Kit Text Recognition, bundled model; iOS: Vision `VNRecognizeTextRequest`) + expect/actual camera (`CameraController`/`CameraPreviewBox`). In-memory flow with no intermediate persistence; duplicates are handled by the shared `core/domain/matching/ProductNameMatcher` (EXACT auto-merge, PARTIAL as suggestion), also applied to quick add and shopping-list moves. |
 
 The per-feature separation and the dependency rule guarantee that phases 2 and 3 are added **without modifying** the existing layers — only extending them.
 
@@ -800,3 +847,6 @@ The per-feature separation and the dependency rule guarantee that phases 2 and 3
 | 5 | DB as the single source of truth | In-memory cache | Real offline-first, fewer states to sync |
 | 6 | Feature-based packages | Layer-based packages | Localizes changes, scales better with phases 2 and 3 |
 | 7 | Generic `UseCase<P, R>` + `ObserveUseCase<P, R>` interface (SplitIt pattern) | Ad-hoc `invoke` per class | Uniform contract, ViewModels decoupled from concrete classes, trivial MockK mocks |
+| 8 | Platform-native camera + OCR behind ports (CameraX + ML Kit / AVFoundation + Vision) | Third-party KMP camera/OCR libraries, cloud OCR | Offline-first, best es-AR accuracy, no model download at runtime, same port pattern as `NotificationScheduler` |
+| 9 | Scan flow state lives only in the ViewModel (no intermediate persistence) | Draft receipt tables in SQLDelight | Product requirement: abandoning the flow loses it; the DB stays the single source of truth (written only on confirm) |
+| 10 | Shared `ProductNameMatcher` (es-AR normalization, EXACT auto-merge / PARTIAL suggestion) | Case-sensitive `findByName` only / heavy global fuzzy (Levenshtein everywhere) | Deterministic, pure-JVM testable, kills duplicates without false positives on quick add |
