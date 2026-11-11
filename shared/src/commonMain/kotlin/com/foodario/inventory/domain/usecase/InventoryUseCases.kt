@@ -25,7 +25,7 @@ class AddFoodItemUseCase(
     override suspend fun invoke(params: AddFoodItemParams): FoodItem {
         require(params.name.isNotBlank()) { "El nombre no puede estar vacío" }
         require(params.quantity > 0) { "La cantidad debe ser positiva" }
-        // Anti-duplicados: merge silencioso solo con match EXACTO y misma unidad (decisión §0.7).
+        // Anti-duplicates: silent merge only on EXACT match and same unit (decision §0.7).
         val existing = ProductNameMatcher
             .findBestMatch(params.name, repository.getAll())
             ?.takeIf { it.confidence == MatchConfidence.EXACT && it.item.unit == params.unit }

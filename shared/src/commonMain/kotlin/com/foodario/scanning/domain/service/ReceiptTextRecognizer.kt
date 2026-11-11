@@ -1,6 +1,6 @@
 package com.foodario.scanning.domain.service
 
 interface ReceiptTextRecognizer {
-    /** OCR on-device sobre bytes JPEG. Devuelve el texto crudo completo (líneas separadas por \n). */
+    /** On-device OCR over JPEG bytes. Returns the full raw text (lines separated by \n). */
     suspend fun recognizeText(imageBytes: ByteArray): String
 }

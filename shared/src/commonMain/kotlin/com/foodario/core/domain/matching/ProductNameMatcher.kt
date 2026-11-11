@@ -10,10 +10,10 @@ data class ProductMatch(
 )
 
 /**
- * Matching anti-duplicados por nombre. Puro y determinista (sin dependencias de plataforma).
+ * Anti-duplicate matching by name. Pure and deterministic (no platform dependencies).
  *
- * Normalización KMP-safe: NO usar java.text.Normalizer (no existe en commonMain);
- * el folding de tildes se hace con un mapa fijo para español.
+ * KMP-safe normalization: do NOT use java.text.Normalizer (it does not exist in commonMain);
+ * accent folding is done with a fixed Spanish map.
  */
 object ProductNameMatcher {
 
@@ -27,7 +27,7 @@ object ProductNameMatcher {
         "de", "del", "la", "el", "los", "las", "en", "con", "sin", "por", "para", "x",
     )
 
-    // Tokens de unidad/packaging típicos de tickets; no aportan identidad de producto.
+    // Unit/packaging tokens typical of receipts; they don't contribute product identity.
     private val UNIT_TOKENS = setOf("kg", "gr", "grs", "lt", "ml", "cc", "un", "pack")
 
     fun normalize(raw: String): String =
