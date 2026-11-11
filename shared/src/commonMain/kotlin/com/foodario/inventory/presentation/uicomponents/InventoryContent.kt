@@ -30,11 +30,11 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.foodario.core.presentation.components.BellIllustration
 import com.foodario.core.presentation.components.DoodleDivider
 import com.foodario.core.presentation.components.FridgeIllustration
 import com.foodario.core.presentation.components.QuickAddBar
+import com.foodario.core.presentation.components.ReceiptIllustration
 import com.foodario.core.presentation.components.notebookMargin
 import com.foodario.core.presentation.theme.FoodarioTheme
 import com.foodario.inventory.domain.model.FoodCategory
@@ -92,10 +92,17 @@ internal fun InventoryContent(
                     Box(
                         modifier = Modifier
                             .size(FoodarioTheme.dimensions.touchTarget)
-                            .clickable(onClick = onScanReceiptClick),
+                            .clickable(
+                                onClickLabel = "Escanear factura",
+                                role = Role.Button,
+                                onClick = onScanReceiptClick,
+                            ),
                         contentAlignment = Alignment.Center,
                     ) {
-                        Text(text = "📷", fontSize = 22.sp)
+                        ReceiptIllustration(
+                            modifier = Modifier.size(24.dp),
+                            contentDescription = "Escanear factura",
+                        )
                     }
                     Box(
                         modifier = Modifier
