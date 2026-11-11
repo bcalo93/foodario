@@ -43,6 +43,18 @@ class InventoryRepositoryImplTest {
     )
 
     @Test
+    fun `getAll returns all items ordered by name`() = runTest {
+        val repository = inMemoryRepository()
+        repository.add(foodItem("Manzana", FoodCategory.FRUITS))
+        repository.add(foodItem("Zanahoria", FoodCategory.VEGETABLES))
+        repository.add(foodItem("Leche", FoodCategory.DAIRY))
+
+        val items = repository.getAll()
+
+        assertEquals(listOf("Leche", "Manzana", "Zanahoria"), items.map { it.name })
+    }
+
+    @Test
     fun `add persists item and returns generated id`() = runTest {
         val repository = inMemoryRepository()
 

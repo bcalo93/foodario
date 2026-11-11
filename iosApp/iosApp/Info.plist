@@ -4,5 +4,7 @@
 <dict>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Foodario usa la cámara para escanear tus facturas y cargar los productos en tu heladera.</string>
 </dict>
 </plist>

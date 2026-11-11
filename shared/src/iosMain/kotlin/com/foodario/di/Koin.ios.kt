@@ -9,6 +9,9 @@ fun platformModule() = module {
     single<com.foodario.alerts.domain.service.NotificationScheduler> {
         com.foodario.alerts.IosNotificationScheduler()
     }
+    single<com.foodario.scanning.domain.service.ReceiptTextRecognizer> {
+        com.foodario.scanning.VisionReceiptTextRecognizer()
+    }
 }
 
 fun initKoin() = startKoin {

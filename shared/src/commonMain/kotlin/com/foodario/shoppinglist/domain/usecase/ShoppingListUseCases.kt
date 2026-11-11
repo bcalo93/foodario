@@ -1,5 +1,7 @@
 package com.foodario.shoppinglist.domain.usecase
 
+import com.foodario.core.domain.matching.MatchConfidence
+import com.foodario.core.domain.matching.ProductNameMatcher
 import com.foodario.core.domain.usecase.UseCase
 import com.foodario.inventory.domain.model.FoodCategory
 import com.foodario.inventory.domain.model.FoodItem
@@ -79,7 +81,12 @@ class MoveToInventoryUseCase(
         }
         val quantityToAdd = shoppingItem.quantity ?: 1.0
         val now = Clock.System.now()
-        val existingItem = inventoryRepository.findByName(shoppingItem.name)
+        val existingItem = ProductNameMatcher
+            .findBestMatch(shoppingItem.name, inventoryRepository.getAll())
+            ?.takeIf { match ->
+                match.confidence == MatchConfidence.EXACT &&
+                    match.item.unit == (shoppingItem.unit ?: QuantityUnit.UNIT)
+            }?.item
         val foodItem = if (existingItem == null) {
             inventoryRepository.add(
                 FoodItem(

@@ -103,6 +103,10 @@ class InventoryRepositoryImpl(
         queries.selectByName(name = name).executeAsOneOrNull()?.toDomain()
     }
 
+    override suspend fun getAll(): List<FoodItem> = withContext(ioDispatcher) {
+        queries.selectAll().executeAsList().map { it.toDomain() }
+    }
+
     override fun observeInventory(query: String): Flow<List<FoodItem>> {
         val flow = if (query.isBlank()) {
             queries.selectAll().asFlow()

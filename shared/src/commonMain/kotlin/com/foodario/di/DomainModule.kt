@@ -10,6 +10,7 @@ import com.foodario.alerts.domain.usecase.SetAlertNotificationsEnabledParams
 import com.foodario.alerts.domain.usecase.SetAlertNotificationsEnabledUseCase
 import com.foodario.alerts.domain.usecase.SetAlertNotifyHourParams
 import com.foodario.alerts.domain.usecase.SetAlertNotifyHourUseCase
+import com.foodario.core.domain.matching.ProductMatch
 import com.foodario.core.domain.usecase.ObserveUseCase
 import com.foodario.core.domain.usecase.UseCase
 import com.foodario.inventory.domain.model.FoodItem
@@ -35,6 +36,13 @@ import com.foodario.inventory.domain.usecase.UpdateQuantityParams
 import com.foodario.inventory.domain.usecase.UpdateQuantityUseCase
 import com.foodario.inventory.domain.usecase.UpdateUnitParams
 import com.foodario.inventory.domain.usecase.UpdateUnitUseCase
+import com.foodario.scanning.domain.model.ScannedReceiptItem
+import com.foodario.scanning.domain.usecase.AddFoodItemsParams
+import com.foodario.scanning.domain.usecase.AddFoodItemsUseCase
+import com.foodario.scanning.domain.usecase.MatchProductsParams
+import com.foodario.scanning.domain.usecase.MatchProductsUseCase
+import com.foodario.scanning.domain.usecase.ParseReceiptParams
+import com.foodario.scanning.domain.usecase.ParseReceiptUseCase
 import com.foodario.shoppinglist.domain.model.ShoppingItem
 import com.foodario.shoppinglist.domain.usecase.AddToShoppingListParams
 import com.foodario.shoppinglist.domain.usecase.AddToShoppingListUseCase
@@ -80,6 +88,9 @@ val domainModule = module {
     factory<UseCase<SetAlertNotifyHourParams, Unit>>(named("setAlertNotifyHour")) {
         SetAlertNotifyHourUseCase(get())
     }
+    factory<UseCase<ParseReceiptParams, List<ScannedReceiptItem>>>(named("parseReceipt")) { ParseReceiptUseCase() }
+    factory<UseCase<MatchProductsParams, List<ProductMatch?>>>(named("matchProducts")) { MatchProductsUseCase(get()) }
+    factory<UseCase<AddFoodItemsParams, List<FoodItem>>>(named("addFoodItems")) { AddFoodItemsUseCase(get()) }
     single {
         ExpirationNotificationSync(
             observeExpiringItems = get(named("observeExpiringItems")),

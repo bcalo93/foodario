@@ -11,6 +11,9 @@ fun platformModule() = module {
     single<com.foodario.alerts.domain.service.NotificationScheduler> {
         com.foodario.alerts.AndroidNotificationScheduler(androidContext())
     }
+    single<com.foodario.scanning.domain.service.ReceiptTextRecognizer> {
+        com.foodario.scanning.MlKitReceiptTextRecognizer()
+    }
 }
 
 fun initKoin(context: Context) = startKoin {

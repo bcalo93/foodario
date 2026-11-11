@@ -1,5 +1,7 @@
 package com.foodario.inventory.domain.usecase
 
+import com.foodario.core.domain.matching.MatchConfidence
+import com.foodario.core.domain.matching.ProductNameMatcher
 import com.foodario.core.domain.usecase.UseCase
 import com.foodario.inventory.domain.model.FoodCategory
 import com.foodario.inventory.domain.model.FoodItem
@@ -23,7 +25,18 @@ class AddFoodItemUseCase(
     override suspend fun invoke(params: AddFoodItemParams): FoodItem {
         require(params.name.isNotBlank()) { "El nombre no puede estar vacío" }
         require(params.quantity > 0) { "La cantidad debe ser positiva" }
-        return repository.add(params.toFoodItem())
+        // Anti-duplicates: silent merge only on EXACT match and same unit (decision §0.7).
+        val existing = ProductNameMatcher
+            .findBestMatch(params.name, repository.getAll())
+            ?.takeIf { it.confidence == MatchConfidence.EXACT && it.item.unit == params.unit }
+            ?.item
+        return if (existing == null) {
+            repository.add(params.toFoodItem())
+        } else {
+            val newQuantity = existing.quantity + params.quantity
+            repository.updateQuantity(existing.id, newQuantity)
+            existing.copy(quantity = newQuantity, updatedAt = Clock.System.now())
+        }
     }
 }
 

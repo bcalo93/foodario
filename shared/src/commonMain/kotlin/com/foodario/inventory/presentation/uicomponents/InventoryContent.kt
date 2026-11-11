@@ -34,6 +34,7 @@ import com.foodario.core.presentation.components.BellIllustration
 import com.foodario.core.presentation.components.DoodleDivider
 import com.foodario.core.presentation.components.FridgeIllustration
 import com.foodario.core.presentation.components.QuickAddBar
+import com.foodario.core.presentation.components.ReceiptIllustration
 import com.foodario.core.presentation.components.notebookMargin
 import com.foodario.core.presentation.theme.FoodarioTheme
 import com.foodario.inventory.domain.model.FoodCategory
@@ -49,6 +50,7 @@ internal fun InventoryContent(
     flight: InventoryEffect.ItemAdded?,
     onEvent: (InventoryEvent) -> Unit,
     onItemClick: (Long) -> Unit,
+    onScanReceiptClick: () -> Unit,
     onFlightFinished: () -> Unit,
     onAlertSettingsClick: () -> Unit,
 ) {
@@ -87,6 +89,21 @@ internal fun InventoryContent(
                         color = colors.ink,
                     )
                     Spacer(Modifier.weight(1f))
+                    Box(
+                        modifier = Modifier
+                            .size(FoodarioTheme.dimensions.touchTarget)
+                            .clickable(
+                                onClickLabel = "Escanear factura",
+                                role = Role.Button,
+                                onClick = onScanReceiptClick,
+                            ),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        ReceiptIllustration(
+                            modifier = Modifier.size(24.dp),
+                            contentDescription = "Escanear factura",
+                        )
+                    }
                     Box(
                         modifier = Modifier
                             .size(FoodarioTheme.dimensions.touchTarget)

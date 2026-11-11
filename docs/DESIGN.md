@@ -160,6 +160,7 @@ The "moderate" metaphor is materialized in these components (all in `core/presen
 - **Bottom bar** (2 destinations: 🧊 Fridge / 🛒 Shopping) implemented in `navigation/FoodarioNavHost.kt` with type-safe routes (`InventoryRoute`, `ShoppingListRoute`). Labels and selection use `labelHand`; icons are a hand-drawn `FridgeIllustration` and the 🛒 emoji.
 - **No global FAB.** Adding items is always done from the `QuickAddBar` at the **top** of each screen's content (`InventoryContent`, `ShoppingListContent`). The selected category for the next quick add is a `StateFlow<FoodCategory>` exposed by the ViewModel (`quickAddCategory`).
 - **Item detail** is pushed with `navigate(FoodDetailRoute(itemId))`; on delete, `FoodDetailEffect.Deleted` is emitted and `navController.popBackStack()` closes the screen.
+- **Receipt scanning** is reached from the 📷 action in the `InventoryContent` header → `navigate(ReceiptScanRoute)`. The bottom bar keeps **2 destinations**; the scan screen is full-screen (the bar hides itself because the route is not a tab).
 - **Section dividers** = doodles (scribble, arrow, hand-drawn asterisk) instead of straight lines.
 
 ### 5.6 `AlertSettingsDialog` — expiration notices
@@ -168,6 +169,14 @@ The "moderate" metaphor is materialized in these components (all in `core/presen
 - A `Switch` for **"Activar avisos"**; when off, the steppers below dim (alpha 0.5) and notifications are cancelled.
 - **Days stepper** ("Avisar … días antes", 1–14) and **hour stepper** ("Avisar a las … h", 0–23) using the hand-drawn circular `−`/`+` buttons from the stepper idiom; the value renders in `quantityHand`.
 - Caption in `caption`/`inkSoft`: *"Podés usar ese producto en una comida antes de que venza"*. Confirm button "Listo" in `penBlue`.
+
+### 5.7 `ReceiptScanScreen` — receipt scanning
+
+- Two-step flow in a single screen (`scanning/presentation`), entered from the inventory header. **No intermediate persistence:** leaving the flow discards everything.
+- **Step 1 — Capture (`CameraStepContent`):** full-bleed camera preview (no notebook margin — the camera rules), hand-drawn circular shutter (~72dp, `Canvas` with irregular double stroke) centered at the bottom, ✕ top-start, caption in `labelHand` over translucent paper: "Alineá la factura y tocá el botón". Permission-denied state shows a `titleHand` message + retry button (never a dead end).
+- **Step 2 — Review (`ReviewStepContent`):** list with `notebookMargin()` and drawn lines; each `ScannedItemRow` = `HandDrawnCheckbox` (uncheck = discard → marker strike-through + dimmed, reversible), inline-editable name (dotted underline like `QuickAddBar`), compact `QuantityStepper`, category emoji (tap opens a `CategoryGrid` dialog) and unit (tap cycles u ↔ g ↔ kg ↔ ml ↔ l).
+- **Duplicate annotation** in `labelHand` / `penBlue` (never `marginRed`, §4.3): exact/merge → "↪ se suma a «Leche» (tenés 2)"; partial → "¿Es lo mismo que «Leche»? Tocá para fusionar" (one tap toggles merge/new).
+- CTA sticky-note "Agregar N a la heladera" (disabled when N=0). On confirm: sticky note "¡Listo! N productos en tu heladera ✓" (~1.2s) and pop. ✕ during review asks confirmation ("Se pierden los productos detectados").
 
 ---
 
@@ -203,6 +212,8 @@ The "moderate" metaphor is materialized in these components (all in `core/presen
 | Checkbox tick | Stroke drawn (200ms) |
 | Strike-through | Marker stroke animated (250ms) |
 | Quantity change | Number "jumps" slightly (scale 1.0 → 1.15 → 1.0, 150ms) |
+| Receipt review | Detected items "write themselves" in: fade + soft slide, ~40ms stagger per item, total ≤ 300ms |
+| Confirm import | Sticky-note success (fade in/out, ~1.2s) then pop back to inventory |
 | Navigation | Standard M3 transitions — personality lives in the components, not in exotic transitions |
 
 **Rule:** no animation exceeds 300ms or blocks an action (principle 1). Respect system `Reduce Motion` by disabling stroke animations.
@@ -267,3 +278,6 @@ core/presentation/
 | 5 | Bundled fonts (Caveat + Nunito, OFL) | Runtime-downloaded fonts | Offline-first app (ARCHITECTURE §2) |
 | 6 | Drawn details via `drawBehind`/`Canvas` | Image assets | Zero resource weight, scales to any density |
 | 7 | "Note on the fridge" icon (§7) | Just a check / "F" monogram / milk carton | The only proposal that fuses domain (fridge) with identity (note/notebook) |
+| 8 | Scan entry from inventory header (📷) | Third bottom-bar tab / global FAB | Bottom bar stays at 2 destinations (§5.5); scanning is another way of "adding to the fridge" |
+| 9 | Discard = uncheck (`HandDrawnCheckbox` + strike) | Swipe-to-delete / trash icon | Reversible, consistent with the shopping-list metaphor |
+| 10 | Silent merge only on EXACT match; PARTIAL is a one-tap penBlue annotation | Always-ask dialog / merge everything automatically | Speed-first without false positives (principle 1) |

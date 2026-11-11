@@ -51,8 +51,9 @@ Inside `shared/src/commonMain/kotlin/com/foodario/`:
 - `<feature>/presentation/` — `*ViewModel`, `*UiState`, `*Screen` Composable.
 - `<feature>/presentation/uicomponents/` — sub-composables (e.g. dialogs).
 - `alerts/` — expiration-notification feature: `domain/model` (`AlertSettings`, `ExpirationNotification`), `domain/repository` (`AlertSettingsRepository`), `domain/usecase` (`AlertSettingsUseCases`), `domain/service` (`NotificationScheduler` port + `ExpirationNotificationSync`), `data` (`AlertSettingsRepositoryImpl`), `presentation` (`AlertSettingsUiState`, `AlertSettingsViewModel`) + `presentation/uicomponents/AlertSettingsDialog`. The expiring-items stream is `inventory/domain/usecase/ObserveExpiringItemsUseCase`.
+- `scanning/` — receipt-scanning feature: `domain/model` (`ScannedReceiptItem`), `domain/service` (`ReceiptTextRecognizer` port + `ReceiptParser`), `domain/usecase` (`ScanningUseCases`), `presentation` (`ReceiptScanViewModel`/`UiState`/`Screen`) + `presentation/camera` (expect `CameraController`/`CameraPreviewBox`) + `presentation/uicomponents`. Duplicate matching lives in `core/domain/matching/ProductNameMatcher` and is shared by all inventory-write paths.
 - `core/presentation/components/`, `core/presentation/theme/` — shared design system (notebook/skeuomorphic theme, fonts in `shared/src/commonMain/composeResources/font/`).
-- `navigation/` — `FoodarioNavHost` with type-safe routes (`@Serializable` `InventoryRoute`, `ShoppingListRoute`, `FoodDetailRoute`).
+- `navigation/` — `FoodarioNavHost` with type-safe routes (`@Serializable` `InventoryRoute`, `ShoppingListRoute`, `FoodDetailRoute`, `ReceiptScanRoute`).
 - `di/` — `DataModule`, `DomainModule`, `PresentationModule`, `SharedModules`. Platform Koin init lives in `androidMain/.../di/Koin.android.kt` and `iosMain/.../di/Koin.ios.kt`; both call `sharedModules()`.
 
 Cross-cutting wiring notes:
@@ -60,6 +61,7 @@ Cross-cutting wiring notes:
 - Use cases are registered in `DomainModule.kt` with `named("...")` qualifiers; ViewModels in `PresentationModule.kt` resolve them via `get(named("..."))`. Don't introduce a different DI convention.
 - `DatabaseDriverFactory` is `expect` in `commonMain` with `actual` in `androidMain` (AndroidSqliteDriver, db name `foodario.db`) and `iosMain` (native driver). Add new platform bits the same way.
 - Notifications are scheduled via the `NotificationScheduler` port: Android uses WorkManager (`ExpirationReminderWorker` + `AndroidNotificationScheduler`, tag `expiration_alert`) and requests `POST_NOTIFICATIONS` in `MainActivity`; iOS uses `UNUserNotificationCenter` (`IosNotificationScheduler`). `ExpirationNotificationSync.start()` is called in `FoodarioApplication` (Android) and `MainViewController` (iOS).
+- Receipt OCR runs through the `ReceiptTextRecognizer` port: Android uses ML Kit (`MlKitReceiptTextRecognizer`), iOS uses Vision (`VisionReceiptTextRecognizer`); both bound in their `platformModule()`. Camera is expect/actual under `scanning/presentation/camera/`; Android declares `CAMERA` in `androidApp/src/main/AndroidManifest.xml`, iOS declares `NSCameraUsageDescription` in `iosApp/iosApp/Info.plist`. The scan flow persists nothing until confirm (no new tables, DB stays at version 2).
 
 ## SQLDelight
 

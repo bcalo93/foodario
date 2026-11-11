@@ -3,6 +3,7 @@ package com.foodario.di
 import com.foodario.alerts.presentation.AlertSettingsViewModel
 import com.foodario.inventory.presentation.FoodDetailViewModel
 import com.foodario.inventory.presentation.InventoryViewModel
+import com.foodario.scanning.presentation.ReceiptScanViewModel
 import com.foodario.shoppinglist.presentation.ShoppingListViewModel
 import org.koin.core.module.dsl.viewModel
 import org.koin.core.qualifier.named
@@ -45,6 +46,14 @@ val presentationModule = module {
             setAlertNotificationsEnabled = get(named("setAlertNotificationsEnabled")),
             setAlertLeadDays = get(named("setAlertLeadDays")),
             setAlertNotifyHour = get(named("setAlertNotifyHour")),
+        )
+    }
+    viewModel {
+        ReceiptScanViewModel(
+            receiptTextRecognizer = get(),
+            parseReceipt = get(named("parseReceipt")),
+            matchProducts = get(named("matchProducts")),
+            addFoodItems = get(named("addFoodItems")),
         )
     }
 }

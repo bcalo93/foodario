@@ -14,6 +14,7 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 fun InventoryScreen(
     onItemClick: (Long) -> Unit = {},
+    onScanReceiptClick: () -> Unit = {},
     viewModel: InventoryViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -35,6 +36,7 @@ fun InventoryScreen(
         flight = flight,
         onEvent = viewModel::onEvent,
         onItemClick = onItemClick,
+        onScanReceiptClick = onScanReceiptClick,
         onFlightFinished = { flight = null },
         onAlertSettingsClick = { showAlertSettings = true },
     )

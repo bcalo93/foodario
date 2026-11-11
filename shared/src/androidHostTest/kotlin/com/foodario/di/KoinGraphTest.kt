@@ -24,6 +24,9 @@ import com.foodario.shoppinglist.domain.usecase.ObserveShoppingListUseCase
 import com.foodario.shoppinglist.domain.usecase.UpdateShoppingItemQuantityParams
 import com.foodario.shoppinglist.domain.usecase.UpdateShoppingItemQuantityUseCase
 import com.foodario.shoppinglist.presentation.ShoppingListViewModel
+import com.foodario.scanning.domain.service.ReceiptTextRecognizer
+import com.foodario.scanning.presentation.ReceiptScanViewModel
+import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
@@ -69,6 +72,7 @@ class KoinGraphTest {
                 DatabaseDriverFactory::class,
                 Long::class,
                 NotificationScheduler::class,
+                ReceiptTextRecognizer::class,
             ),
         ).verify()
     }
@@ -111,6 +115,7 @@ class KoinGraphTest {
                         }
                     }
                     single<NotificationScheduler> { mockk(relaxed = true) }
+                    single<ReceiptTextRecognizer> { mockk { coEvery { recognizeText(any()) } returns "" } }
                 },
                 domainModule,
                 presentationModule,
@@ -131,6 +136,7 @@ class KoinGraphTest {
             koin.get<UseCase<UpdateShoppingItemQuantityParams, Unit>>(named("updateShoppingItemQuantity")),
         )
         assertIs<ExpirationNotificationSync>(koin.get<ExpirationNotificationSync>())
+        assertIs<ReceiptScanViewModel>(koin.get<ReceiptScanViewModel>())
 
         val inventoryState = koin.get<InventoryViewModel>().uiState.first { !it.isLoading }
         val shoppingState = koin.get<ShoppingListViewModel>().uiState.first { !it.isLoading }

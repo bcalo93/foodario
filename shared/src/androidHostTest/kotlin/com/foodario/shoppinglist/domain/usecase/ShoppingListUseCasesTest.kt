@@ -103,7 +103,7 @@ class ShoppingListUseCasesTest {
         val shoppingListRepository = mockk<ShoppingListRepository>()
         val inventoryRepository = mockk<InventoryRepository>()
         coEvery { shoppingListRepository.getById(1L) } returns shoppingItem()
-        coEvery { inventoryRepository.findByName("Huevos") } returns null
+        coEvery { inventoryRepository.getAll() } returns emptyList()
         coEvery { shoppingListRepository.remove(any()) } returns Unit
         coEvery { inventoryRepository.add(any()) } returns FoodItem(
             id = 99L,
@@ -137,7 +137,7 @@ class ShoppingListUseCasesTest {
             unit = null,
             createdAt = createdAt,
         )
-        coEvery { inventoryRepository.findByName("Pan") } returns null
+        coEvery { inventoryRepository.getAll() } returns emptyList()
         coEvery { shoppingListRepository.remove(any()) } returns Unit
         coEvery { inventoryRepository.add(any()) } returns FoodItem(
             id = 99L,
@@ -179,7 +179,7 @@ class ShoppingListUseCasesTest {
             updatedAt = createdAt,
         )
         coEvery { shoppingListRepository.getById(1L) } returns shoppingItem()
-        coEvery { inventoryRepository.findByName("Huevos") } returns existing
+        coEvery { inventoryRepository.getAll() } returns listOf(existing)
         coEvery { inventoryRepository.updateQuantity(7L, 18.0) } returns Unit
         coEvery { shoppingListRepository.remove(1L) } returns Unit
         val useCase = MoveToInventoryUseCase(shoppingListRepository, inventoryRepository)
@@ -188,6 +188,42 @@ class ShoppingListUseCasesTest {
 
         assertEquals(18.0, result.quantity)
         coVerify { inventoryRepository.updateQuantity(7L, 18.0) }
+        coVerify(exactly = 0) { inventoryRepository.add(any()) }
+        coVerify { shoppingListRepository.remove(1L) }
+    }
+
+    @Test
+    fun `move merges when normalized name matches exactly`() = runTest {
+        val shoppingListRepository = mockk<ShoppingListRepository>()
+        val inventoryRepository = mockk<InventoryRepository>()
+        val existing = FoodItem(
+            id = 7L,
+            name = "Leche",
+            category = FoodCategory.DAIRY,
+            quantity = 2.0,
+            unit = QuantityUnit.UNIT,
+            isFrozen = false,
+            expirationDate = null,
+            createdAt = createdAt,
+            updatedAt = createdAt,
+        )
+        coEvery { shoppingListRepository.getById(1L) } returns ShoppingItem(
+            id = 1L,
+            name = "LECHE ",
+            category = null,
+            quantity = null,
+            unit = null,
+            createdAt = createdAt,
+        )
+        coEvery { inventoryRepository.getAll() } returns listOf(existing)
+        coEvery { inventoryRepository.updateQuantity(7L, 3.0) } returns Unit
+        coEvery { shoppingListRepository.remove(1L) } returns Unit
+        val useCase = MoveToInventoryUseCase(shoppingListRepository, inventoryRepository)
+
+        val result = useCase(MoveToInventoryParams(shoppingItemId = 1L))
+
+        assertEquals(3.0, result.quantity)
+        coVerify { inventoryRepository.updateQuantity(7L, 3.0) }
         coVerify(exactly = 0) { inventoryRepository.add(any()) }
         coVerify { shoppingListRepository.remove(1L) }
     }
