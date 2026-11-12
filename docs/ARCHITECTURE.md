@@ -62,7 +62,7 @@ shared/src/
 ├── commonMain/       # UI (Compose), ViewModels, UseCases, Repositories, domain models, SQLDelight (.sq)
 ├── androidMain/      # Android SQLDelight driver + Android Koin init
 ├── iosMain/          # iOS SQLDelight driver + iOS Koin init
-├── commonTest/       # Pure-JVM tests: mappers, models, theme helpers (no mockk/koin-test)
+├── commonTest/       # Shared tests (JVM + iOS simulator): mappers, models, theme helpers (no mockk/koin-test)
 ├── androidHostTest/  # Tests with MockK + manual Koin + JdbcSqliteDriver IN_MEMORY. Lives the ViewModel, UseCase and repository tests.
 └── iosTest/          # Native iOS tests (smoke-test placeholder for now)
 ```

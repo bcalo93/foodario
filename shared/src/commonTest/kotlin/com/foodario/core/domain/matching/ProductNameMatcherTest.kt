@@ -27,12 +27,12 @@ class ProductNameMatcherTest {
     )
 
     @Test
-    fun `normalize folds accents, case and punctuation`() {
+    fun `normalize folds accents case and punctuation`() {
         assertEquals("leche ent 1l", ProductNameMatcher.normalize("  LECHE® Ent. 1L! "))
     }
 
     @Test
-    fun `significantTokens drops stopwords, unit tokens, short and numeric tokens`() {
+    fun `significantTokens drops stopwords unit tokens short and numeric tokens`() {
         val tokens = ProductNameMatcher.significantTokens(
             ProductNameMatcher.normalize("2 x leche de la casa 500g"),
         )
