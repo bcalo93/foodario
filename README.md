@@ -61,7 +61,7 @@ foodario/
 │       ├── commonMain/       UI, ViewModels, use cases, repositories, .sq files
 │       ├── androidMain/      Android SqlDriver + Koin init
 │       ├── iosMain/          iOS SqlDriver + Koin init + MainViewController()
-│       ├── commonTest/       Pure-JVM tests
+│       ├── commonTest/       Shared tests (run on JVM host + iOS simulator)
 │       ├── androidHostTest/  Android tests with sqlite in-memory driver
 │       └── iosTest/          iOS simulator tests
 ├── docs/            ARCHITECTURE.md, DESIGN.md, RELEASE.md
@@ -118,19 +118,18 @@ Xcode builds and runs the app on the simulator or device. Before the first iOS l
 
 ## Tests
 
-Run a focused test, not the whole suite:
+Run a focused test, not the whole suite (`commonTest` runs as part of both):
 
 ```bash
-./gradlew :shared:test                # pure-JVM commonTest
-./gradlew :shared:testAndroidHostTest # Android tests (MockK + in-memory sqlite driver)
-./gradlew :shared:iosSimulatorArm64Test # iOS simulator tests
+./gradlew :shared:testAndroidHostTest   # commonTest + androidHostTest on the JVM (MockK + in-memory sqlite driver)
+./gradlew :shared:iosSimulatorArm64Test # commonTest + iosTest on the iOS simulator
 ```
 
 Android tests assemble a Koin graph manually — use `shared/src/androidHostTest/.../KoinGraphTest.kt` as the template.
 
 CI runs `./gradlew :androidApp:check :shared:check` before assembling the release APK.
 
-There is **no** `lint`, `detekt`, `ktlint`, or `spotless` configuration. Verification is the default Gradle `check` task.
+There is **no** `detekt`, `ktlint`, or `spotless` configuration; Android Lint runs as part of `check` via AGP. Verification is `./gradlew :androidApp:check :shared:check`.
 
 ---
 

@@ -24,7 +24,7 @@ Rule of thumb: new code goes in `shared/`. `androidApp/` and `iosApp/` only host
 - Android debug: `./gradlew :androidApp:assembleDebug`
 - Android release APK (requires `keystore.properties` at repo root): `./gradlew :androidApp:assembleRelease` — output at `androidApp/build/outputs/apk/release/androidApp-release.apk`.
 - iOS: open `iosApp/iosApp.xcodeproj` in Xcode and run there. Bundle id template `com.foodario.Foodario$(TEAM_ID)` — set `TEAM_ID` in `iosApp/Configuration/Config.xcconfig` for real builds.
-- No `lint`, `detekt`, `ktlint`, or `spotless` is configured. Verification is just `./gradlew :check`.
+- No `detekt`, `ktlint`, or `spotless` is configured (Android Lint runs inside `check` via AGP). Verification is `./gradlew :androidApp:check :shared:check`.
 
 ## Tests
 
@@ -34,8 +34,7 @@ Run a focused test, not the whole suite:
   `./gradlew :shared:testAndroidHostTest`
 - iOS tests:
   `./gradlew :shared:iosSimulatorArm64Test`
-- Pure-JVM `commonTest`:
-  `./gradlew :shared:test`
+- `commonTest` has no task of its own — it runs as part of both commands above (JVM + iOS simulator).
 - CI runs `./gradlew :androidApp:check :shared:check` before building the release APK.
 
 Tests assemble a Koin graph manually (`shared/src/androidHostTest/.../KoinGraphTest.kt` is the template) and use the `sqlite` driver plus the `TestHelpers.kt` factories — copy that pattern for new use cases/repos.
@@ -67,7 +66,7 @@ Cross-cutting wiring notes:
 
 - Schema files: `shared/src/commonMain/sqldelight/com/foodario/database/*.sq` (`FoodItem.sq`, `ShoppingItem.sq`).
 - Generated package: `com.foodario.database` (see `sqldelight { databases { create("FoodarioDatabase") { packageName.set("com.foodario.database") } } }`).
-- After editing a `.sq`, the Gradle plugin regenerates Kotlin on next build. If IntelliJ flags missing generated types, run `./gradlew :shared:generateDebugFoodarioDatabaseInterface` (or any `:shared` task that triggers codegen).
+- After editing a `.sq`, the Gradle plugin regenerates Kotlin on next build. If IntelliJ flags missing generated types, run `./gradlew :shared:generateCommonMainFoodarioDatabaseInterface` (or any `:shared` task that triggers codegen).
 - Timestamps are stored as `Long` epoch millis; map to/from `kotlinx.datetime.LocalDate` / `kotlin.time.Instant` in the `*Mapper.kt` of each feature.
 
 ## Release / signing
